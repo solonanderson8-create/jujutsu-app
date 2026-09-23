@@ -57,9 +57,10 @@
     const n = JJ.byId[id];
     const pos = n.type === 'position' ? n : JJ.byId[JJ.byId[n.category].position];
     const tag = n.type === 'position' ? '<span class="chip-tag">position</span>' : '';
-    const off = n.type === 'technique' && JJ.filter !== 'all' && !n[JJ.filter] ? ' off' : '';
+    const dot = n.type === 'technique' ? `dot role-${n.role}` : 'dot';
+    const off = n.type === 'technique' && !JJ.matches(n) ? ' off' : '';
     return `<button class="chip${off}" data-go="${n.id}" style="--c:${pos.color}">
-      <span class="dot"></span>${esc(n.name)}${tag}${extra ? `<span class="chip-tag">${esc(extra)}</span>` : ''}</button>`;
+      <span class="${dot}"></span>${esc(n.name)}${tag}${extra ? `<span class="chip-tag">${esc(extra)}</span>` : ''}</button>`;
   }
 
   function chipList(ids, empty) {
@@ -71,7 +72,9 @@
   function techniqueHTML(t) {
     const cat = JJ.byId[t.category];
     const pos = JJ.byId[cat.position];
-    const badges = (t.gi ? '<span class="badge gi">Gi</span>' : '') + (t.nogi ? '<span class="badge nogi">No-Gi</span>' : '');
+    const role = { top: 'You: Top', bottom: 'You: Bottom', neutral: 'Standing' }[t.role];
+    const badges = `<span class="badge role ${t.role}"><span class="role-dot"></span>${role}</span>` +
+      (t.gi ? '<span class="badge gi">Gi</span>' : '') + (t.nogi ? '<span class="badge nogi">No-Gi</span>' : '');
     return `
       <div class="crumb"><button class="crumb-link" data-go="${pos.id}" style="--c:${pos.color}"><span class="dot"></span>${esc(pos.name)}</button>
         <span class="crumb-sep">›</span> ${esc(cat.name)}</div>
@@ -173,7 +176,7 @@
       if (yt) {
         slot.innerHTML = `<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/${yt}"
           title="${esc(t.name)} video" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`;
-      } else if (url) {
+      } else if (/^https?:\/\//i.test(url)) {
         slot.innerHTML = `<p><a href="${esc(url)}" target="_blank" rel="noopener">Open video ↗</a></p>`;
       } else {
         slot.innerHTML = '<p class="muted">No video yet. Find a good one, then paste the link below and it will show up here.</p>';

@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Jujutsu Flow</title>
   <meta name="description" content="Zoomable flow chart of jiu-jitsu positions and techniques.">
+  <meta name="theme-color" content="#1b1b1f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="JJ Flow">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
@@ -27,10 +35,17 @@
       <input id="search" type="search" placeholder="Search moves…  ( / )" autocomplete="off" aria-label="Search moves">
       <ul id="search-results" hidden></ul>
     </div>
-    <div class="segmented" role="group" aria-label="Gi filter">
-      <button class="filter-btn" data-filter="all">All</button>
-      <button class="filter-btn" data-filter="gi">Gi</button>
-      <button class="filter-btn" data-filter="nogi">No-Gi</button>
+    <div class="filters">
+      <div class="segmented" role="group" aria-label="Top or bottom filter">
+        <button class="filter-btn" data-key="role" data-value="all">Both</button>
+        <button class="filter-btn" data-key="role" data-value="top"><span class="dot role-top"></span>Top</button>
+        <button class="filter-btn" data-key="role" data-value="bottom"><span class="dot role-bottom"></span>Bottom</button>
+      </div>
+      <div class="segmented" role="group" aria-label="Gi filter">
+        <button class="filter-btn" data-key="style" data-value="all">All</button>
+        <button class="filter-btn" data-key="style" data-value="gi">Gi</button>
+        <button class="filter-btn" data-key="style" data-value="nogi">No-Gi</button>
+      </div>
     </div>
   </header>
 
@@ -56,6 +71,8 @@
       <li><span class="swatch success"></span>If it works</li>
       <li><span class="swatch fail"></span>If it fails</li>
       <li><span class="swatch related"></span>Related</li>
+      <li><span class="dot role-top"></span>You're on top</li>
+      <li><span class="dot role-bottom"></span>You're on bottom</li>
     </ul>
   </div>
 

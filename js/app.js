@@ -7,13 +7,17 @@
   const { Graph, Panel, store } = JJ;
   const $ = s => document.querySelector(s);
   const panelEl = $('#panel');
+  // When this matches, the panel is a bottom sheet (phones, portrait tablets).
+  // Keep in sync with the matching @media rule in styles.css.
+  const SHEET_QUERY = '(max-width: 719px), (orientation: portrait) and (max-width: 1100px)';
+  const isSheet = () => matchMedia(SHEET_QUERY).matches;
   const isNarrow = () => innerWidth < 720;
 
   // The part of the screen not covered by the panel. The camera centers here.
   Graph.safeArea = () => {
     const open = panelEl.classList.contains('open');
     if (!open) return { x: 0, y: 0, w: innerWidth, h: innerHeight };
-    if (isNarrow()) return { x: 0, y: 0, w: innerWidth, h: innerHeight - panelEl.offsetHeight };
+    if (isSheet()) return { x: 0, y: 0, w: innerWidth, h: innerHeight - panelEl.offsetHeight };
     return { x: 0, y: 0, w: innerWidth - panelEl.offsetWidth, h: innerHeight };
   };
 
@@ -48,16 +52,19 @@
   $('#zoom-out').addEventListener('click', () => Graph.zoomBy(1 / 1.6));
   $('#zoom-fit').addEventListener('click', () => Graph.fitAll());
 
-  // ---- Gi / No-Gi filter ------------------------------------------------------
+  // ---- Filters: Gi / No-Gi and Top / Bottom -----------------------------------
+  // Each button has data-key ("style" or "role") and data-value.
   const filterBtns = document.querySelectorAll('.filter-btn');
-  function setFilter(mode) {
-    JJ.filter = mode;
-    Graph.setFilter(mode);
-    filterBtns.forEach(b => b.classList.toggle('active', b.dataset.filter === mode));
-    store.set('jj-filter', mode === 'all' ? '' : mode);
+  function setFilter(key, value) {
+    JJ.filter[key] = value;
+    Graph.refreshFilter();
+    filterBtns.forEach(b => {
+      if (b.dataset.key === key) b.classList.toggle('active', b.dataset.value === value);
+    });
+    store.set('jj-filter-' + key, value === 'all' ? '' : value);
     if (Panel.current) Panel.open(Panel.current);  // refresh chip dimming
   }
-  filterBtns.forEach(b => b.addEventListener('click', () => setFilter(b.dataset.filter)));
+  filterBtns.forEach(b => b.addEventListener('click', () => setFilter(b.dataset.key, b.dataset.value)));
 
   // ---- Search -----------------------------------------------------------------
   const input = $('#search');
@@ -116,10 +123,16 @@
   // ---- Start up ---------------------------------------------------------------
   Graph.init($('#graph'));
   Panel.init(panelEl);
-  setFilter(store.get('jj-filter') || 'all');
+  setFilter('style', store.get('jj-filter-style') || 'all');
+  setFilter('role', store.get('jj-filter-role') || 'all');
 
   addEventListener('resize', () => Graph.apply());
 
   const start = decodeURIComponent(location.hash.slice(1));
   if (JJ.byId[start]) select(start);
+
+  // Offline support. Only works when served from a website (not a double-clicked file).
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
 })();

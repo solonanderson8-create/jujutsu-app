@@ -126,7 +126,7 @@
       const c = JJ.byId[t.category];
       const p = JJ.byId[c.position];
       el('line', { x1: c.x, y1: c.y, x2: t.x, y2: t.y, class: 'spoke', style: `--c:${p.color}` }, L.techSpokes);
-      const g = el('g', { class: 'node tech-node', 'data-id': t.id, style: `--c:${p.color}` }, L.techs);
+      const g = el('g', { class: 'node tech-node role-' + t.role, 'data-id': t.id, style: `--c:${p.color}` }, L.techs);
       el('circle', { cx: t.x, cy: t.y, r: R.tech }, g);
       const label = el('text', { x: t.x, y: t.y + R.tech, dy: '1.2em', 'text-anchor': 'middle' }, g);
       label.textContent = t.name;
@@ -281,9 +281,9 @@
     }
   };
 
-  // Gi / No-Gi filter: dim techniques that don't match.
-  Graph.setFilter = function (mode) {
-    const match = t => mode === 'all' || t[mode];
+  // Filters (Gi / No-Gi, Top / Bottom): dim techniques that don't match.
+  Graph.refreshFilter = function () {
+    const match = JJ.matches;
     JJ.data.techniques.forEach(t => t.el.classList.toggle('off', !match(t)));
     this.techLinks.forEach(({ line, a, b }) => line.classList.toggle('off', !match(a) || !match(b)));
   };
