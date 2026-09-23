@@ -6,6 +6,11 @@ The owner edits content by asking Claude, so most requests are **data edits in `
 - They are learning to code. Keep explanations short and scannable (headers, bullets), and use physical/mechanical analogies.
 - Be honest: if a technique link or description is wrong, say so.
 
+## Names the owner uses
+- **The web**: the main zoomable graph view (`#graph`, drawn by `js/graph.js`).
+- **Technique page**: the panel that opens when you tap a move on the web (`#panel`, built by `js/panel.js`).
+- **Position page**: the same panel when you tap a position bubble (working name, not yet confirmed by the owner).
+
 ## Data rules (js/data.js)
 - Every technique: `t(id, name, category, style, role, desc, success, fail, related)`.
   - `style`: `'both' | 'gi' | 'nogi'`. `role`: `'top' | 'bottom' | 'neutral'` (neutral = both standing).

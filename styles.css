@@ -93,6 +93,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .tlink.off { opacity: .05; }
 
 .hi-link { fill: none; stroke-width: calc(var(--sw) * 2.5); }
+.pin { pointer-events: none; }
+.pin circle { fill: var(--c); stroke: var(--bg); stroke-width: calc(var(--sw) * 2); }
+.pin.role-bottom circle { fill: var(--bg); stroke: var(--c); stroke-width: calc(var(--sw) * 3); }
+.pin.pin-main circle { stroke: #fff; stroke-width: calc(var(--sw) * 3); }
+.pin text { font-size: var(--fs-tech); font-weight: 700; }
 .hi-link.success { stroke: var(--success); }
 .hi-link.fail { stroke: var(--fail); }
 .hi-link.related { stroke: var(--related); stroke-dasharray: calc(var(--sw) * 5) calc(var(--sw) * 4); }
@@ -215,8 +220,32 @@ button { font: inherit; color: inherit; cursor: pointer; }
   position: absolute; top: 12px; right: 12px; width: 36px; height: 36px;
   background: var(--surface-2); border: 0; border-radius: 50%; font-size: 22px; line-height: 1;
 }
-.panel-body { overflow-y: auto; padding: 20px 22px 40px; }
-.panel h2 { margin: 6px 44px 8px 0; font-size: 26px; line-height: 1.2; }
+.panel-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* Tabs across the top: [Technique] [Notes · 3] */
+.panel-tabs {
+  display: flex; gap: 4px; margin: 12px 60px 0 16px; padding: 3px; flex: none;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.panel-tabs button {
+  flex: 1; min-height: 36px; padding: 6px 10px; border: 0; border-radius: 9px;
+  background: none; color: var(--muted); font-weight: 700;
+}
+.panel-tabs button.active { background: var(--surface-2); color: var(--text); }
+.tab-count { color: var(--accent); }
+
+/* The sliding tray: two pages side by side, snapping into place when swiped. */
+.pages {
+  flex: 1; min-height: 0; display: flex;
+  overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain; scrollbar-width: none;
+}
+.pages::-webkit-scrollbar { display: none; }
+.page {
+  flex: 0 0 100%; min-width: 0; overflow-y: auto; scroll-snap-align: start; scroll-snap-stop: always;
+  padding: 16px 22px 40px; overscroll-behavior-y: contain;
+}
+.panel h2 { margin: 6px 0 8px; font-size: 26px; line-height: 1.2; }
 .panel h3 { margin: 0 0 8px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
 .panel h4 { margin: 12px 0 6px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .panel section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
@@ -263,12 +292,29 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .btn:hover { border-color: var(--accent); }
 .panel a { color: var(--accent); }
 
-.notes-input {
+/* Notes page: a timeline of note cards, newest at the bottom. */
+.note-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.note {
+  padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; border-left: 3px solid var(--accent);
+}
+.note header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
+.note time { font-size: 13px; font-weight: 700; color: var(--muted); }
+.note-text { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 16px; line-height: 1.55; }
+.note-actions, .note-edit-actions { display: flex; gap: 14px; justify-content: flex-end; margin-top: 6px; }
+.note-edit-actions { gap: 8px; }
+.link-btn { background: none; border: 0; padding: 4px 0; color: var(--accent); font-size: 14px; font-weight: 700; }
+.link-btn.danger { color: #f07a7a; }
+.note-compose { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.note-compose .btn { align-self: flex-end; }
+.note-new, .note-edit {
   width: 100%; padding: 10px 12px; font: inherit; color: var(--text); resize: vertical;
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px; line-height: 1.5;
 }
-.notes-input:focus, .video-input:focus { outline: none; border-color: var(--accent); }
-.notes-status { margin: 6px 0 0; }
+.note-edit { margin-top: 8px; }
+.note-new:focus, .note-edit:focus, .video-input:focus { outline: none; border-color: var(--accent); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.btn-primary:hover { filter: brightness(1.1); }
 
 /* ---------- Phones: compact top bar ---------- */
 @media (max-width: 719px) {

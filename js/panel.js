@@ -1,6 +1,8 @@
 /*
- * THE PANEL — the detail sheet that slides in when you tap a move or position.
- * Shows: description, video, where to go next, and your personal notes.
+ * THE PANEL — the "technique page" (or "position page") that slides in when
+ * you tap something on the web. It holds two pages side by side on a sliding
+ * tray: the main page (description, links, video) and the Notes page.
+ * Swipe sideways or tap the tabs to slide between them.
  *
  * Notes and video links are saved in the browser (localStorage), so they
  * stay on this device only. Sharing them with other people needs a server;
@@ -22,9 +24,35 @@
     return m ? m[1] : null;
   }
 
+  // ---------------------------------------------------------------------------
+  // NOTES STORE — each move keeps a list of timestamped notes:
+  //   [{ id, text, created, edited? }]  (times are milliseconds since 1970)
+  // ---------------------------------------------------------------------------
+  const Notes = {
+    key: id => 'jj-notes-list:' + id,
+    list(id) {
+      let list = [];
+      try { list = JSON.parse(store.get(this.key(id)) || '[]'); } catch (e) {}
+      // The first version stored one big text box per move. Bring it over once.
+      const old = store.get('jj-notes:' + id);
+      if (old && old.trim()) {
+        list.unshift({ id: newId(), text: old.trim(), created: Date.now(), imported: true });
+        this.save(id, list);
+        store.set('jj-notes:' + id, '');
+      }
+      return list.sort((a, b) => a.created - b.created);  // oldest first
+    },
+    save(id, list) { store.set(this.key(id), list.length ? JSON.stringify(list) : ''); },
+  };
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const when = ms => new Date(ms).toLocaleString(undefined,
+    { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+
   const Panel = {
     onNavigate: () => {},
     onClose: () => {},
+    page: 0,          // 0 = main page, 1 = notes page
+    drafts: {},       // unsent note text per move, kept while the app is open
   };
 
   Panel.init = function (root) {
@@ -33,7 +61,9 @@
     root.querySelector('.panel-close').addEventListener('click', () => this.onClose());
     this.body.addEventListener('click', e => {
       const chip = e.target.closest('[data-go]');
-      if (chip) this.onNavigate(chip.dataset.go);
+      if (chip) return this.onNavigate(chip.dataset.go);
+      const tab = e.target.closest('[data-page]');
+      if (tab) return this.showPage(+tab.dataset.page, true);
     });
   };
 
@@ -44,13 +74,140 @@
 
   Panel.open = function (id) {
     const n = JJ.byId[id];
+    const same = id === this.current;
+    const oldMain = same && this.body.querySelector('.page-main');
+    const keepScroll = oldMain ? oldMain.scrollTop : 0;
+    if (!same) this.page = 0;           // a new move always starts on its main page
     this.current = id;
-    this.body.innerHTML = n.type === 'position' ? positionHTML(n) : techniqueHTML(n);
-    this.body.scrollTop = 0;
+
+    const mainLabel = n.type === 'position' ? 'Position' : 'Technique';
+    this.body.innerHTML = `
+      <div class="panel-tabs" role="tablist">
+        <button role="tab" data-page="0">${mainLabel}</button>
+        <button role="tab" data-page="1">Notes <span class="tab-count"></span></button>
+      </div>
+      <div class="pages">
+        <div class="page page-main">${n.type === 'position' ? positionHTML(n) : techniqueHTML(n)}</div>
+        <div class="page page-notes"></div>
+      </div>`;
     this.root.classList.add('open');
-    bindNotes(this.body, id);
+
+    this.pages = this.body.querySelector('.pages');
+    this.pages.addEventListener('scroll', () => {
+      const i = Math.round(this.pages.scrollLeft / (this.pages.clientWidth || 1));
+      if (i !== this.page) { this.page = i; this.markTab(); }
+    }, { passive: true });
+
     if (n.type === 'technique') bindVideo(this.body, n);
+    this.renderNotes();
+    this.body.querySelector('.page-main').scrollTop = keepScroll;
+    this.showPage(this.page, false);
   };
+
+  // Slide the tray to page i (0 = main, 1 = notes).
+  Panel.showPage = function (i, animate) {
+    this.page = i;
+    this.markTab();
+    this.pages.scrollTo({ left: i * this.pages.clientWidth, behavior: animate ? 'smooth' : 'auto' });
+  };
+
+  Panel.markTab = function () {
+    this.body.querySelectorAll('[data-page]').forEach(b => {
+      const on = +b.dataset.page === this.page;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on);
+    });
+  };
+
+  // ---------------------------------------------------------------------------
+  // NOTES PAGE — a timeline of your notes, oldest at the top, newest at the
+  // bottom, with a box at the end to add a new one.
+  // ---------------------------------------------------------------------------
+  Panel.renderNotes = function (scrollToEnd) {
+    const id = this.current;
+    const n = JJ.byId[id];
+    const list = Notes.list(id);
+    const page = this.body.querySelector('.page-notes');
+    this.body.querySelector('.tab-count').textContent = list.length ? '· ' + list.length : '';
+
+    page.innerHTML = `
+      <h2>${esc(n.name)}</h2>
+      <p class="muted small">Your notes, oldest first. Saved on this device.</p>
+      <div class="note-list">
+        ${list.length ? list.map(noteHTML).join('') : '<p class="muted note-empty">No notes yet. Add your first one below.</p>'}
+      </div>
+      <div class="note-compose">
+        <textarea class="note-new" rows="4" placeholder="What clicked today? Details your coach mentioned?"></textarea>
+        <button class="btn btn-primary note-add">Add note</button>
+      </div>
+      ${communityHTML()}`;
+
+    const box = page.querySelector('.note-new');
+    box.value = this.drafts[id] || '';
+    box.addEventListener('input', () => { this.drafts[id] = box.value; });
+    const add = () => {
+      const text = box.value.trim();
+      if (!text) return box.focus();
+      Notes.save(id, [...Notes.list(id), { id: newId(), text, created: Date.now() }]);
+      delete this.drafts[id];
+      this.renderNotes(true);
+    };
+    page.querySelector('.note-add').addEventListener('click', add);
+    box.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add(); });
+
+    page.querySelector('.note-list').addEventListener('click', e => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      const card = btn.closest('.note');
+      const noteId = card.dataset.note;
+      const act = btn.dataset.act;
+      if (act === 'delete') {
+        if (!confirm('Delete this note? This can\'t be undone.')) return;
+        Notes.save(id, Notes.list(id).filter(x => x.id !== noteId));
+        this.renderNotes();
+      } else if (act === 'edit') {
+        const note = Notes.list(id).find(x => x.id === noteId);
+        card.classList.add('editing');
+        card.querySelector('.note-body').innerHTML = `
+          <textarea class="note-edit" rows="4"></textarea>
+          <div class="note-edit-actions">
+            <button class="btn" data-act="cancel">Cancel</button>
+            <button class="btn btn-primary" data-act="save">Save</button>
+          </div>`;
+        const ta = card.querySelector('.note-edit');
+        ta.value = note.text;
+        ta.focus();
+      } else if (act === 'save') {
+        const text = card.querySelector('.note-edit').value.trim();
+        if (!text) return;
+        Notes.save(id, Notes.list(id).map(x => x.id === noteId ? { ...x, text, edited: Date.now() } : x));
+        this.renderNotes();
+      } else if (act === 'cancel') {
+        this.renderNotes();
+      }
+    });
+
+    if (scrollToEnd) page.scrollTop = page.scrollHeight;
+  };
+
+  function noteHTML(note) {
+    const meta = note.imported ? ' · moved from your old notes'
+      : note.edited ? ` · edited ${esc(when(note.edited))}` : '';
+    return `
+      <article class="note" data-note="${esc(note.id)}">
+        <header>
+          <time datetime="${new Date(note.created).toISOString()}">${esc(when(note.created))}</time>
+          <span class="muted small">${meta}</span>
+        </header>
+        <div class="note-body">
+          <p class="note-text">${esc(note.text)}</p>
+          <div class="note-actions">
+            <button class="link-btn" data-act="edit">Edit</button>
+            <button class="link-btn danger" data-act="delete">Delete</button>
+          </div>
+        </div>
+      </article>`;
+  }
 
   // A clickable "chip" that jumps to another technique or position.
   function chip(id, extra) {
@@ -103,10 +260,7 @@
           <a class="btn" target="_blank" rel="noopener"
              href="https://www.youtube.com/results?search_query=${encodeURIComponent('bjj ' + t.name + ' tutorial')}">Search YouTube ↗</a>
         </div>
-      </section>
-
-      ${notesHTML()}
-      ${communityHTML()}`;
+      </section>`;
   }
 
   function positionHTML(p) {
@@ -131,16 +285,6 @@
       <section class="links">
         <h3>Inside this position</h3>
         ${p.cats.map(c => `<h4>${esc(c.name)}</h4><div class="chips">${c.techs.map(t => chip(t.id)).join('')}</div>`).join('')}
-      </section>
-      ${notesHTML()}`;
-  }
-
-  function notesHTML() {
-    return `
-      <section class="notes">
-        <h3>My notes</h3>
-        <textarea class="notes-input" rows="5" placeholder="What clicked for you? Details your coach mentioned? Write it here."></textarea>
-        <p class="muted small notes-status">Saved on this device.</p>
       </section>`;
   }
 
@@ -150,19 +294,6 @@
         <h3>Community notes</h3>
         <p class="muted">Coming later. Sharing notes between people needs an online database. This version keeps everything on your device.</p>
       </section>`;
-  }
-
-  function bindNotes(body, id) {
-    const box = body.querySelector('.notes-input');
-    const status = body.querySelector('.notes-status');
-    const key = 'jj-notes:' + id;
-    box.value = store.get(key);
-    let timer;
-    box.addEventListener('input', () => {
-      status.textContent = 'Saving…';
-      clearTimeout(timer);
-      timer = setTimeout(() => { store.set(key, box.value.trim() ? box.value : ''); status.textContent = 'Saved on this device.'; }, 400);
-    });
   }
 
   function bindVideo(body, t) {

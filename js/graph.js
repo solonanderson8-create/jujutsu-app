@@ -197,7 +197,10 @@
     setLayer(L.catSpokes, catT);
     setLayer(L.cats, catT);
     setLayer(L.techLayer, techT);
-    setLayer(L.hi, techT);
+    // Focus arrows stay visible at every zoom level. When zoomed out, "pins"
+    // mark the focused move and its links so the arrows have visible ends.
+    setLayer(L.hi, 1);
+    this.techT = techT;
     setLayer(L.flows, 1 - 0.7 * techT);  // big arrows step back when you're looking at moves
     // Arrow labels only when zoomed in (or on hover) so the overview stays readable.
     this.svg.classList.toggle('overview', catT < 0.5);
@@ -212,6 +215,8 @@
       text.setAttribute('x', c.mx);
       text.setAttribute('y', c.my);
     });
+
+    if (this.focusLinks.length) this.drawFocus();
 
     const level = k < (LOD.cat[0] + LOD.cat[1]) / 2 ? 0 : k < (LOD.tech[0] + LOD.tech[1]) / 2 ? 1 : 2;
     if (level !== this.level) { this.level = level; this.onLevel(level); }
@@ -249,10 +254,12 @@
     this.refreshFocus();
   };
 
+  Graph.focusLinks = [];  // [{ from, to, kind }] for the focused technique
+
   Graph.refreshFocus = function () {
     const id = this.hovered || this.selected;
-    const hi = this.layers.hi;
-    hi.textContent = '';
+    this.focusLinks = [];
+    this.layers.hi.textContent = '';
     this.svg.querySelectorAll('.lit, .sel').forEach(n => n.classList.remove('lit', 'sel'));
     this.svg.classList.toggle('has-focus', !!id);
     if (!id) return;
@@ -267,10 +274,9 @@
       LINK_KINDS.forEach(kind => n[kind].forEach(tid => {
         const u = JJ.byId[tid];
         lit(u);
-        const endR = u.type === 'position' ? u.r + 6 : u.type === 'category' ? R.cat + 6 : R.tech + 7;
-        const c = curve(n, u, R.tech + 4, endR, kind === 'fail' ? -0.18 : 0.18);
-        el('path', { d: c.d, class: 'hi-link ' + kind, 'marker-end': `url(#arrow-${kind})` }, hi);
+        this.focusLinks.push({ from: n, to: u, kind });
       }));
+      this.drawFocus();
     } else if (n.type === 'position') {
       this.flowEls.forEach(({ f, g }) => {
         if (f.from === id || f.to === id) {
@@ -279,6 +285,41 @@
         }
       });
     }
+  };
+
+  // Draw the focus arrows (and, when zoomed out, pins at each end).
+  // Re-run on every zoom step because the pin size depends on the zoom.
+  Graph.drawFocus = function () {
+    const hi = this.layers.hi;
+    hi.textContent = '';
+    const k = this.view.k;
+    const pinR = Math.max(R.tech, 6 / k);           // never smaller than 6px on screen
+    const pinsShown = 1 - this.techT;               // pins fade out once real dots are visible
+    const endR = u => u.type === 'position' ? lerp(R.pos + 10, u.r + 6, this.catT)
+      : u.type === 'category' ? R.cat + 6 : pinR + 7 / k;
+
+    this.focusLinks.forEach(({ from, to, kind }) => {
+      const c = curve(from, to, pinR + 4 / k, endR(to), kind === 'fail' ? -0.18 : 0.18);
+      el('path', { d: c.d, class: 'hi-link ' + kind, 'marker-end': `url(#arrow-${kind})` }, hi);
+    });
+
+    if (pinsShown < 0.01) return;
+    const pins = el('g', { class: 'pins', style: `opacity:${pinsShown}` }, hi);
+    const techs = [this.focusLinks[0].from, ...this.focusLinks.map(l => l.to)]
+      .filter((t, i, all) => t.type === 'technique' && all.indexOf(t) === i);
+    // Label each pin unless it would sit on top of a label already placed
+    // (the focused move goes first, so it always keeps its label).
+    const placed = [];
+    techs.forEach((t, i) => {
+      const p = JJ.byId[JJ.byId[t.category].position];
+      const g = el('g', { class: 'pin role-' + t.role + (i === 0 ? ' pin-main' : ''), 'data-id': t.id, style: `--c:${p.color}` }, pins);
+      el('circle', { cx: t.x, cy: t.y, r: pinR }, g);
+      const crowded = placed.some(q => Math.abs(q.x - t.x) * k < 90 && Math.abs(q.y - t.y) * k < 22);
+      if (crowded) return;
+      placed.push(t);
+      const label = el('text', { x: t.x, y: t.y + pinR, dy: '1.2em', 'text-anchor': 'middle' }, g);
+      label.textContent = t.name;
+    });
   };
 
   // Filters (Gi / No-Gi, Top / Bottom): dim techniques that don't match.
