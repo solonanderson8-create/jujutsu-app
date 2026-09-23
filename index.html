@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Jujutsu Flow</title>
+  <meta name="description" content="Zoomable flow chart of jiu-jitsu positions and techniques.">
+  <meta name="theme-color" content="#1b1b1f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="JJ Flow">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- The map itself. Everything is drawn into this SVG by js/graph.js -->
+  <svg id="graph" aria-label="Technique flow chart"></svg>
+
+  <!-- The detail panel (filled in by js/panel.js) -->
+  <aside id="panel" class="panel" aria-label="Details">
+    <button class="panel-close" aria-label="Close">×</button>
+    <div class="panel-body"></div>
+  </aside>
+
+  <!-- Top bar: title, search, Gi / No-Gi filter -->
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark"></span>Jujutsu Flow</div>
+    <div class="search">
+      <input id="search" type="search" placeholder="Search moves…  ( / )" autocomplete="off" aria-label="Search moves">
+      <ul id="search-results" hidden></ul>
+    </div>
+    <div class="filters">
+      <div class="segmented" role="group" aria-label="Top or bottom filter">
+        <button class="filter-btn" data-key="role" data-value="all">Both</button>
+        <button class="filter-btn" data-key="role" data-value="top"><span class="dot role-top"></span>Top</button>
+        <button class="filter-btn" data-key="role" data-value="bottom"><span class="dot role-bottom"></span>Bottom</button>
+      </div>
+      <div class="segmented" role="group" aria-label="Gi filter">
+        <button class="filter-btn" data-key="style" data-value="all">All</button>
+        <button class="filter-btn" data-key="style" data-value="gi">Gi</button>
+        <button class="filter-btn" data-key="style" data-value="nogi">No-Gi</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Bottom left: zoom level "gearbox" + zoom buttons -->
+  <div class="controls">
+    <div class="levels" role="group" aria-label="Detail level">
+      <button class="level-btn" title="See all positions"><span class="pip"></span>Positions</button>
+      <button class="level-btn" title="See categories"><span class="pip"></span>Categories</button>
+      <button class="level-btn" title="See every move"><span class="pip"></span>Moves</button>
+    </div>
+    <div class="zoom">
+      <button id="zoom-in" aria-label="Zoom in">+</button>
+      <button id="zoom-out" aria-label="Zoom out">−</button>
+      <button id="zoom-fit" aria-label="Show everything">⤢</button>
+    </div>
+  </div>
+
+  <!-- Bottom right: what the arrow colours mean -->
+  <div id="legend" class="legend">
+    <button id="legend-toggle" class="legend-title">Key</button>
+    <ul>
+      <li><span class="swatch flow"></span>Position flow</li>
+      <li><span class="swatch success"></span>If it works</li>
+      <li><span class="swatch fail"></span>If it fails</li>
+      <li><span class="swatch related"></span>Related</li>
+      <li><span class="dot role-top"></span>You're on top</li>
+      <li><span class="dot role-bottom"></span>You're on bottom</li>
+    </ul>
+  </div>
+
+  <div id="hint" class="hint" hidden>
+    <p><b>Scroll or pinch</b> to zoom through the levels. <b>Drag</b> to move around. <b>Tap</b> a bubble to dive in.</p>
+    <button>Got it</button>
+  </div>
+
+
+  <script src="js/data.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/panel.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
