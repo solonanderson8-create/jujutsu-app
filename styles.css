@@ -292,6 +292,36 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .btn:hover { border-color: var(--accent); }
 .panel a { color: var(--accent); }
 
+/* Signposts to the Notes page */
+.icon-pencil { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.notes-pill {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 7px 14px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); border-radius: 999px;
+  font-size: 15px; font-weight: 700;
+}
+.notes-pill:hover { background: color-mix(in srgb, var(--accent) 26%, transparent); }
+.notes-pill .icon-pencil { color: var(--accent); }
+.pill-arrow { font-size: 18px; line-height: 1; color: var(--accent); }
+.panel section.notes-teaser {
+  padding: 14px 16px 16px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-radius: 12px; background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+.notes-teaser h3 .icon-pencil { color: var(--accent); }
+.teaser-meta { margin: 0; font-size: 13px; font-weight: 700; color: var(--muted); }
+.teaser-text {
+  margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.teaser-go { margin-top: 12px; gap: 6px; }
+
+/* One-time "peek": tug the tray left to show the Notes page, then spring back. */
+.pages.peek > .page { animation: peek 1.1s cubic-bezier(.3, 0, .2, 1); }
+@keyframes peek { 0%, 100% { transform: none; } 35%, 55% { transform: translateX(-72px); } }
+.panel-tabs button.glow { animation: glow 1.2s ease-in-out 2; }
+@keyframes glow { 50% { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); } }
+@media (prefers-reduced-motion: reduce) { .pages.peek > .page, .panel-tabs button.glow { animation: none; } }
+
 /* Notes page: a timeline of note cards, newest at the bottom. */
 .note-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 .note {

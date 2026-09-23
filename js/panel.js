@@ -102,6 +102,22 @@
     this.renderNotes();
     this.body.querySelector('.page-main').scrollTop = keepScroll;
     this.showPage(this.page, false);
+    this.peekOnce();
+  };
+
+  // The first time a page opens on this device, the tray slides a little to
+  // show the Notes page is there, then springs back (like tugging a drawer).
+  Panel.peekOnce = function () {
+    if (this.page !== 0 || store.get('jj-notes-peeked')) return;
+    store.set('jj-notes-peeked', '1');
+    const pages = this.pages, tab = this.body.querySelector('[data-page="1"]');
+    setTimeout(() => {
+      if (!pages.isConnected) return;
+      pages.classList.add('peek');
+      tab.classList.add('glow');
+      setTimeout(() => pages.classList.remove('peek'), 1200);
+      setTimeout(() => tab.classList.remove('glow'), 2400);
+    }, 700);
   };
 
   // Slide the tray to page i (0 = main, 1 = notes).
@@ -129,6 +145,8 @@
     const list = Notes.list(id);
     const page = this.body.querySelector('.page-notes');
     this.body.querySelector('.tab-count').textContent = list.length ? '· ' + list.length : '';
+    this.body.querySelector('.js-notes-pill').innerHTML = pillHTML(list);
+    this.body.querySelector('.js-notes-teaser').innerHTML = teaserHTML(list);
 
     page.innerHTML = `
       <h2>${esc(n.name)}</h2>
@@ -190,6 +208,25 @@
     if (scrollToEnd) page.scrollTop = page.scrollHeight;
   };
 
+  // Signposts on the main page that point to the Notes page.
+  const PENCIL = '<svg class="icon-pencil" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg>';
+
+  function pillHTML(list) {
+    const label = list.length ? `My notes · ${list.length}` : 'Add a note';
+    return `${PENCIL}<span>${label}</span><span class="pill-arrow">›</span>`;
+  }
+
+  function teaserHTML(list) {
+    const last = list[list.length - 1];
+    const body = last
+      ? `<p class="teaser-meta">Latest · ${esc(when(last.created))}</p><p class="teaser-text">${esc(last.text)}</p>`
+      : '<p class="muted">Nothing yet. Write down what clicked, or what your coach told you.</p>';
+    return `
+      <h3>${PENCIL} My notes</h3>
+      ${body}
+      <button class="btn btn-primary teaser-go" data-page="1">${last ? 'Open notes' : 'Write a note'} <span aria-hidden="true">→</span></button>`;
+  }
+
   function noteHTML(note) {
     const meta = note.imported ? ' · moved from your old notes'
       : note.edited ? ` · edited ${esc(when(note.edited))}` : '';
@@ -237,6 +274,7 @@
         <span class="crumb-sep">›</span> ${esc(cat.name)}</div>
       <h2>${esc(t.name)}</h2>
       <div class="badges">${badges}</div>
+      <button class="notes-pill js-notes-pill" data-page="1"></button>
       <p class="desc">${esc(t.desc)}</p>
 
       <section class="links success">
@@ -260,7 +298,8 @@
           <a class="btn" target="_blank" rel="noopener"
              href="https://www.youtube.com/results?search_query=${encodeURIComponent('bjj ' + t.name + ' tutorial')}">Search YouTube ↗</a>
         </div>
-      </section>`;
+      </section>
+      <section class="notes-teaser js-notes-teaser"></section>`;
   }
 
   function positionHTML(p) {
@@ -273,6 +312,7 @@
     return `
       <div class="crumb"><span class="dot" style="--c:${p.color}"></span> Position · ${count} moves</div>
       <h2>${esc(p.name)}</h2>
+      <button class="notes-pill js-notes-pill" data-page="1"></button>
       <p class="desc">${esc(p.blurb)}</p>
       <section class="links success">
         <h3><span class="icon">→</span> From here you can go to</h3>
@@ -285,7 +325,8 @@
       <section class="links">
         <h3>Inside this position</h3>
         ${p.cats.map(c => `<h4>${esc(c.name)}</h4><div class="chips">${c.techs.map(t => chip(t.id)).join('')}</div>`).join('')}
-      </section>`;
+      </section>
+      <section class="notes-teaser js-notes-teaser"></section>`;
   }
 
   function communityHTML() {
