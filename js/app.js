@@ -66,6 +66,28 @@
   }
   filterBtns.forEach(b => b.addEventListener('click', () => setFilter(b.dataset.key, b.dataset.value)));
 
+  // ---- Colour themes ----------------------------------------------------------
+  // The palettes themselves live in styles.css ([data-theme="…"] blocks).
+  // A seasonal theme = one new block there + its name added here.
+  const THEMES = ['light', 'dark'];
+  const themeBtn = $('#theme-btn');
+  function applyTheme(name, remember) {
+    document.documentElement.dataset.theme = name;
+    if (remember) store.set('jj-theme', name);
+    const css = getComputedStyle(document.documentElement);
+    document.querySelector('meta[name="theme-color"]').content = css.getPropertyValue('--surface').trim();
+    themeBtn.setAttribute('aria-label', name === 'light' ? 'Switch to dark mode' : 'Switch to light mode');
+    if (Graph.arrowHeads) Graph.refreshTheme();
+  }
+  themeBtn.addEventListener('click', () => {
+    const now = document.documentElement.dataset.theme;
+    applyTheme(THEMES[(THEMES.indexOf(now) + 1) % THEMES.length], true);
+  });
+  // Until someone picks a theme, follow the device's own light/dark setting.
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!store.get('jj-theme')) applyTheme(e.matches ? 'dark' : 'light', false);
+  });
+
   // ---- Search -----------------------------------------------------------------
   const input = $('#search');
   const results = $('#search-results');
@@ -122,6 +144,7 @@
 
   // ---- Start up ---------------------------------------------------------------
   Graph.init($('#graph'));
+  applyTheme(document.documentElement.dataset.theme, false);
   Panel.init(panelEl);
   setFilter('style', store.get('jj-filter-style') || 'all');
   setFilter('role', store.get('jj-filter-role') || 'all');

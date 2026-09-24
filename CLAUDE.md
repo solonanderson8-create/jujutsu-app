@@ -11,6 +11,13 @@ The owner edits content by asking Claude, so most requests are **data edits in `
 - **Technique page**: the panel that opens when you tap a move on the web (`#panel`, built by `js/panel.js`).
 - **Position page**: the same panel when you tap a position bubble (working name, not yet confirmed by the owner).
 
+## Colour themes (owner's Behr paint picks)
+- All colours live in the `[data-theme="…"]` blocks at the top of `styles.css`; nothing else hard-codes colour. Use roles (`--bg`, `--surface`, `--accent`, `--success`, `--fail`…).
+- **Light**: web background Sunflower Seed `#FFE3AC` · pages Rumors `#744245` · contrast Joyful Orange `#FA9335` · works arrow Trailing Vine `#5A6952` · fails arrow Plantain Chips `#D6A550`.
+- **Dark**: web background Midnight Blue `#445C73` · pages Nocturne Blue `#2E4D6A` · contrast Extreme Yellow `#FFB729` · works arrow Pistachio `#B9C04F` · fails arrow Sizzling Sunset `#EB7E4D`. (Midnight, Nocturne and Pistachio were matched to the owner's paint-card photo; the published hex codes looked greyer/duller.)
+- The contrast colour marks "you are here": active tab, active filter, active zoom level.
+- Seasonal themes (planned): add a new `[data-theme="name"]` block + the name to `THEMES` in `js/app.js`.
+
 ## Data rules (js/data.js)
 - Every technique: `t(id, name, category, style, role, desc, success, fail, related)`.
   - `style`: `'both' | 'gi' | 'nogi'`. `role`: `'top' | 'bottom' | 'neutral'` (neutral = both standing).

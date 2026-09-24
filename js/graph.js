@@ -19,7 +19,7 @@
   const LOD = { cat: [0.3, 0.45], tech: [0.95, 1.25] };     // zoom where layers fade in
   const K_MIN = 0.04, K_MAX = 6;
   const LINK_KINDS = ['success', 'fail', 'related'];
-  const ARROW_COLORS = { flow: '#9a9aa6', success: '#5cc98b', fail: '#f0a04b', related: '#8f8fa0' };
+  const ARROW_KINDS = ['flow', 'success', 'fail', 'related'];  // colours come from the theme (styles.css)
 
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -81,13 +81,15 @@
     layout();
 
     const defs = el('defs', {}, svg);
-    for (const kind in ARROW_COLORS) {
+    this.arrowHeads = {};
+    ARROW_KINDS.forEach(kind => {
       const m = el('marker', {
         id: 'arrow-' + kind, viewBox: '0 0 10 10', refX: 7, refY: 5,
         markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse',
       }, defs);
-      el('path', { d: 'M0,0 L10,5 L0,10 z', fill: ARROW_COLORS[kind] }, m);
-    }
+      this.arrowHeads[kind] = el('path', { d: 'M0,0 L10,5 L0,10 z' }, m);
+    });
+    this.refreshTheme();
 
     this.world = el('g', { class: 'world' }, svg);
     const L = this.layers = {};
@@ -287,6 +289,13 @@
     }
   };
 
+  // Arrowheads live inside <marker>s, which don't reliably pick up CSS
+  // colours on every browser, so copy the current theme's colours in by hand.
+  Graph.refreshTheme = function () {
+    const css = getComputedStyle(document.documentElement);
+    ARROW_KINDS.forEach(kind => this.arrowHeads[kind].setAttribute('fill', css.getPropertyValue('--' + kind).trim()));
+  };
+
   // Draw the focus arrows (and, when zoomed out, pins at each end).
   // Re-run on every zoom step because the pin size depends on the zoom.
   Graph.drawFocus = function () {
@@ -300,6 +309,7 @@
 
     this.focusLinks.forEach(({ from, to, kind }) => {
       const c = curve(from, to, pinR + 4 / k, endR(to), kind === 'fail' ? -0.18 : 0.18);
+      if (kind !== 'related') el('path', { d: c.d, class: 'hi-casing' }, hi);  // thin outline so pale colours stay visible
       el('path', { d: c.d, class: 'hi-link ' + kind, 'marker-end': `url(#arrow-${kind})` }, hi);
     });
 

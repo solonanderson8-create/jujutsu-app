@@ -1,19 +1,69 @@
-/* ---------- Colours (Obsidian-style dark theme) ---------- */
+/* =========================================================================
+   THEMES — every colour in the app comes from these "paint racks".
+   The rest of the file only asks for a role (--bg, --accent, …), never a
+   specific colour, so swapping the rack recolours everything at once.
+
+   To add a seasonal theme later: copy one block, give it a new name
+   (e.g. [data-theme="halloween"]), change the colours, and add the name
+   to THEMES in js/app.js.
+   ========================================================================= */
+
+/* Shared, theme-independent settings */
 :root {
-  --bg: #1b1b1f;
-  --bg-dots: #2a2a30;
-  --surface: #25252b;
-  --surface-2: #2f2f37;
-  --border: #3a3a44;
-  --text: #e4e4ea;
-  --muted: #9a9aa8;
-  --accent: #8b7cf6;
-  --success: #5cc98b;
-  --fail: #f0a04b;
-  --related: #8f8fa0;
   --radius: 12px;
   --font: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* LIGHT — Behr: Sunflower Seed, Rumors, Joyful Orange, Trailing Vine, Plantain Chips */
+:root, [data-theme="light"] {
+  color-scheme: light;
+  --field: #5A3235;             /* text boxes on the pages */
+  --bg: #FFE3AC;                /* Sunflower Seed P270-3 — the web's background */
+  --bg-dots: #EDCB8C;
+  --surface: #744245;           /* Rumors MQ1-15 — pages, bars and buttons */
+  --surface-2: #83504F;
+  --border: #9A6A67;
+  --text: #FFF3DA;              /* text on pages */
+  --muted: #E3C7B7;
+  --ink: #4A2729;               /* text drawn on the web */
+  --ink-muted: #7A5A4E;
+  --accent: #FA9335;            /* Joyful Orange P240-7 — "you are here", buttons */
+  --on-accent: #3A1A1C;         /* text on top of the accent colour */
+  --success: #5A6952;           /* Trailing Vine S390-7 — "if it works" arrows */
+  --fail: #D6A550;              /* Plantain Chips M290-6 — "if it fails" arrows */
+  --related: #8C6E62;
+  --flow: #8C6E62;              /* big arrows between positions */
+  --tlink: #9C7F6B;
+  --select: #3A1A1C;            /* ring around the tapped move */
+  --casing: #4A2729;            /* thin outline under focus arrows so pale ones stay visible */
+  --shadow: rgba(58, 26, 28, .28);
+  --danger: #FFB3A6;
+}
+
+/* DARK — Behr: Midnight Blue, Nocturne Blue, Extreme Yellow, Pistachio, Sizzling Sunset */
+[data-theme="dark"] {
   color-scheme: dark;
+  --field: #22405B;
+  --bg: #445C73;                /* Midnight Blue N480-7 (matched to the paint card) */
+  --bg-dots: #536B83;
+  --surface: #2E4D6A;           /* Nocturne Blue HDC-CL-28 (matched to the paint card) */
+  --surface-2: #3A5A78;
+  --border: #50708F;
+  --text: #F3F5F8;
+  --muted: #B9C7D6;
+  --ink: #F3F5F8;
+  --ink-muted: #C4D0DC;
+  --accent: #FFB729;            /* Extreme Yellow P260-7 */
+  --on-accent: #1F2B38;
+  --success: #B9C04F;           /* Pistachio MQ4-42 (matched to the paint card) */
+  --fail: #EB7E4D;              /* Sizzling Sunset P200-6 */
+  --related: #AEBBC9;
+  --flow: #AEBBC9;
+  --tlink: #93A4B6;
+  --select: #FFFFFF;
+  --casing: #1F2B38;
+  --shadow: rgba(10, 20, 30, .45);
+  --danger: #FFB3A6;
 }
 
 * { box-sizing: border-box; }
@@ -43,7 +93,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 #graph.grabbing { cursor: grabbing; }
 #graph text {
-  fill: var(--text);
+  fill: var(--ink);
   paint-order: stroke fill;
   stroke: var(--bg);
   stroke-width: calc(var(--sw) * 4);
@@ -78,25 +128,26 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .tech-node.role-bottom circle { fill: var(--bg); stroke: var(--c); stroke-width: calc(var(--sw) * 3.5); }
 .dot.role-top { background: var(--c, var(--text)); }
 .dot.role-bottom { background: transparent; box-shadow: inset 0 0 0 2.5px var(--c, var(--text)); }
-.filter-btn .dot { margin-right: 6px; width: 9px; height: 9px; --c: var(--text); }
+.filter-btn .dot { margin-right: 6px; width: 9px; height: 9px; --c: currentColor; }
 
 .tech-node.off { opacity: .12; }
-.tech-node.sel circle { stroke: #fff; stroke-width: calc(var(--sw) * 3); }
-.pos-node.sel circle { stroke: #fff; stroke-width: calc(var(--sw) * 4); }
+.tech-node.sel circle { stroke: var(--select); stroke-width: calc(var(--sw) * 3); }
+.pos-node.sel circle { stroke: var(--select); stroke-width: calc(var(--sw) * 4); }
 
-.flow path { fill: none; stroke: #9a9aa6; stroke-width: calc(var(--sw) * 2); opacity: .75; }
-.flow text { font-size: var(--fs-edge); fill: var(--muted) !important; }
+.flow path { fill: none; stroke: var(--flow); stroke-width: calc(var(--sw) * 2); opacity: .75; }
+.flow text { font-size: var(--fs-edge); fill: var(--ink-muted) !important; }
 .overview .flow:not(.lit) text { display: none; }
-.has-focus .flow.lit text { fill: var(--text) !important; }
+.has-focus .flow.lit text { fill: var(--ink) !important; }
 
-.tlink { stroke: #6c6c78; stroke-width: var(--sw); opacity: .35; }
+.tlink { stroke: var(--tlink); stroke-width: var(--sw); opacity: .35; }
 .tlink.off { opacity: .05; }
 
 .hi-link { fill: none; stroke-width: calc(var(--sw) * 2.5); }
+.hi-casing { fill: none; stroke: var(--casing); stroke-width: calc(var(--sw) * 4.5); opacity: .55; }
 .pin { pointer-events: none; }
 .pin circle { fill: var(--c); stroke: var(--bg); stroke-width: calc(var(--sw) * 2); }
 .pin.role-bottom circle { fill: var(--bg); stroke: var(--c); stroke-width: calc(var(--sw) * 3); }
-.pin.pin-main circle { stroke: #fff; stroke-width: calc(var(--sw) * 3); }
+.pin.pin-main circle { stroke: var(--select); stroke-width: calc(var(--sw) * 3); }
 .pin text { font-size: var(--fs-tech); font-weight: 700; }
 .hi-link.success { stroke: var(--success); }
 .hi-link.fail { stroke: var(--fail); }
@@ -107,8 +158,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .has-focus .cat-node:not(.lit) { opacity: .2; }
 .has-focus .tlink { opacity: .06; }
 .has-focus .flow:not(.lit) { opacity: .25; }
-.has-focus .flow.lit path { stroke: var(--text); opacity: 1; }
+.has-focus .flow.lit path { stroke: var(--ink); opacity: 1; }
 .has-focus .pos-node:not(.lit) { opacity: .35; }
+
+/* ---------- Status-bar strip (iPhone / iPad home-screen app) ---------- */
+.status-strip {
+  position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px);
+  background: var(--surface); z-index: 50; pointer-events: none;
+}
 
 /* ---------- Floating UI ---------- */
 .topbar {
@@ -141,7 +198,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #search-results {
   position: absolute; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  box-shadow: 0 12px 32px rgba(0,0,0,.4); z-index: 20;
+  box-shadow: 0 12px 32px var(--shadow); z-index: 20;
 }
 #search-results button {
   display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
@@ -151,6 +208,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #search-results button:hover { background: var(--surface-2); }
 #search-results .empty { padding: 8px 10px; }
 
+/* Light / dark switch: shows the moon in light mode (tap for dark) and the sun in dark mode. */
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 42px; height: 42px; padding: 0; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-btn:hover { color: var(--accent); }
+[data-theme="light"] .icon-sun, [data-theme="dark"] .icon-moon { display: none; }
 .filters { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
 .segmented {
   display: flex; padding: 3px;
@@ -160,7 +226,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   display: inline-flex; align-items: center; min-height: 36px;
   padding: 6px 12px; background: none; border: 0; border-radius: 9px; color: var(--muted);
 }
-.segmented button.active, .levels button.active { background: var(--surface-2); color: var(--text); }
+/* "You are here" = the contrast colour */
+.segmented button.active, .levels button.active { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.levels button.active .pip { background: var(--on-accent); border-color: var(--on-accent); }
 
 .controls {
   position: fixed; left: 12px; bottom: 12px;
@@ -173,7 +241,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .levels button { display: flex; align-items: center; gap: 8px; text-align: left; }
 .pip { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--muted); }
-.levels button.active .pip { background: var(--accent); border-color: var(--accent); }
 .zoom {
   display: flex; flex-direction: column; overflow: hidden;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
@@ -192,7 +259,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .legend li { display: flex; align-items: center; gap: 8px; }
 .legend.collapsed ul { display: none; }
 .swatch { width: 22px; height: 0; border-top: 3px solid; }
-.swatch.flow { border-color: #9a9aa6; }
+.swatch.flow { border-color: var(--muted); }
 .swatch.success { border-color: var(--success); }
 .swatch.fail { border-color: var(--fail); }
 .swatch.related { border-color: var(--related); border-top-style: dashed; }
@@ -202,10 +269,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   width: min(460px, calc(100% - 32px));
   display: flex; gap: 12px; align-items: center; padding: 12px 16px;
   background: var(--surface-2); border: 1px solid var(--accent); border-radius: var(--radius);
-  box-shadow: 0 12px 32px rgba(0,0,0,.4);
+  box-shadow: 0 12px 32px var(--shadow);
 }
 .hint p { margin: 0; flex: 1; }
-.hint button { background: var(--accent); border: 0; border-radius: 8px; padding: 6px 12px; color: #fff; font-weight: 700; }
+.hint button { background: var(--accent); border: 0; border-radius: 8px; padding: 6px 12px; color: var(--on-accent); font-weight: 700; }
 
 /* ---------- Detail panel ---------- */
 .panel {
@@ -214,10 +281,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
   transform: translateX(100%); transition: transform .28s ease;
   display: flex; flex-direction: column; z-index: 30;
 }
-.panel.open { transform: none; box-shadow: -12px 0 40px rgba(0,0,0,.35); }
+.panel.open { transform: none; box-shadow: -12px 0 40px var(--shadow); }
 .panel.open ~ .legend { opacity: 0; pointer-events: none; }
+.panel { padding-top: env(safe-area-inset-top, 0px); }
 .panel-close {
-  position: absolute; top: 12px; right: 12px; width: 36px; height: 36px;
+  position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px; width: 36px; height: 36px;
   background: var(--surface-2); border: 0; border-radius: 50%; font-size: 22px; line-height: 1;
 }
 .panel-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -225,13 +293,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* Tabs across the top: [Technique] [Notes · 3] */
 .panel-tabs {
   display: flex; gap: 4px; margin: 12px 60px 0 16px; padding: 3px; flex: none;
-  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 70%, #000); border: 1px solid var(--border); border-radius: var(--radius);
 }
 .panel-tabs button {
   flex: 1; min-height: 36px; padding: 6px 10px; border: 0; border-radius: 9px;
   background: none; color: var(--muted); font-weight: 700;
 }
-.panel-tabs button.active { background: var(--surface-2); color: var(--text); }
+.panel-tabs button.active { background: var(--accent); color: var(--on-accent); }
+.panel-tabs button.active .tab-count { color: inherit; }
 .tab-count { color: var(--accent); }
 
 /* The sliding tray: two pages side by side, snapping into place when swiped. */
@@ -262,11 +331,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .badge.top .role-dot { background: var(--text); }
 .badge.bottom .role-dot { box-shadow: inset 0 0 0 2px var(--text); }
 .badge.neutral .role-dot { background: var(--muted); }
-.badge.gi { background: #3b3f5c; color: #c9cffc; }
-.badge.nogi { background: #4a3550; color: #f2c6f5; }
+.badge.gi { background: var(--bg); color: var(--ink); }
+.badge.nogi { background: var(--text); color: var(--surface); }
 
-.links.success h3 .icon { color: var(--success); }
-.links.fail h3 .icon { color: var(--fail); }
+.links.success h3 .icon { color: color-mix(in srgb, var(--success) 50%, var(--text)); }
+.links.fail h3 .icon { color: color-mix(in srgb, var(--fail) 70%, var(--text)); }
 .links.related h3 .icon { color: var(--related); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
@@ -283,7 +352,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .video-form { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .video-input {
   flex: 1 1 180px; padding: 8px 12px; font: inherit; font-size: 14px; color: var(--text);
-  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  background: var(--field); border: 1px solid var(--border); border-radius: 8px;
 }
 .btn {
   display: inline-flex; align-items: center; padding: 8px 12px; font-size: 14px;
@@ -292,35 +361,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .btn:hover { border-color: var(--accent); }
 .panel a { color: var(--accent); }
 
-/* Signposts to the Notes page */
-.icon-pencil { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.notes-pill {
-  display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 7px 14px;
-  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text);
-  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); border-radius: 999px;
-  font-size: 15px; font-weight: 700;
-}
-.notes-pill:hover { background: color-mix(in srgb, var(--accent) 26%, transparent); }
-.notes-pill .icon-pencil { color: var(--accent); }
-.pill-arrow { font-size: 18px; line-height: 1; color: var(--accent); }
-.panel section.notes-teaser {
-  padding: 14px 16px 16px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
-  border-radius: 12px; background: color-mix(in srgb, var(--accent) 7%, var(--surface));
-}
-.notes-teaser h3 .icon-pencil { color: var(--accent); }
-.teaser-meta { margin: 0; font-size: 13px; font-weight: 700; color: var(--muted); }
-.teaser-text {
-  margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-}
-.teaser-go { margin-top: 12px; gap: 6px; }
-
 /* One-time "peek": tug the tray left to show the Notes page, then spring back. */
 .pages.peek > .page { animation: peek 1.1s cubic-bezier(.3, 0, .2, 1); }
 @keyframes peek { 0%, 100% { transform: none; } 35%, 55% { transform: translateX(-72px); } }
-.panel-tabs button.glow { animation: glow 1.2s ease-in-out 2; }
+.panel-tabs button.glow:not(.active) { animation: glow 1.2s ease-in-out 2; }
 @keyframes glow { 50% { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); } }
-@media (prefers-reduced-motion: reduce) { .pages.peek > .page, .panel-tabs button.glow { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .pages.peek > .page, .panel-tabs button.glow:not(.active) { animation: none; } }
 
 /* Notes page: a timeline of note cards, newest at the bottom. */
 .note-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
@@ -334,16 +380,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .note-actions, .note-edit-actions { display: flex; gap: 14px; justify-content: flex-end; margin-top: 6px; }
 .note-edit-actions { gap: 8px; }
 .link-btn { background: none; border: 0; padding: 4px 0; color: var(--accent); font-size: 14px; font-weight: 700; }
-.link-btn.danger { color: #f07a7a; }
+.link-btn.danger { color: var(--danger); }
 .note-compose { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
 .note-compose .btn { align-self: flex-end; }
 .note-new, .note-edit {
   width: 100%; padding: 10px 12px; font: inherit; color: var(--text); resize: vertical;
-  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; line-height: 1.5;
+  background: var(--field); border: 1px solid var(--border); border-radius: 8px; line-height: 1.5;
 }
 .note-edit { margin-top: 8px; }
 .note-new:focus, .note-edit:focus, .video-input:focus { outline: none; border-color: var(--accent); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
 .btn-primary:hover { filter: brightness(1.1); }
 
 /* ---------- Phones: compact top bar ---------- */
@@ -367,7 +413,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
     border-left: 0; border-top: 1px solid var(--border); border-radius: 18px 18px 0 0;
     transform: translateY(100%);
   }
-  .panel.open { box-shadow: 0 -12px 40px rgba(0,0,0,.4); }
+  .panel.open { box-shadow: 0 -12px 40px var(--shadow); }
+  .panel { padding-top: 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .panel-close { top: 12px; }
   .panel.open ~ .controls { display: none; }
   .hint { top: auto; bottom: 170px; }
 }
