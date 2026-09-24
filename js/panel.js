@@ -44,6 +44,21 @@
     },
     save(id, list) { store.set(this.key(id), list.length ? JSON.stringify(list) : ''); },
   };
+  // Moves that were merged (e.g. two Armbars → one) bring their notes and video along.
+  Notes.migrateRenamed = function () {
+    Object.entries(JJ.renamed).forEach(([old, now]) => {
+      const oldList = this.list(old);                    // also picks up the older single-box notes
+      if (oldList.length) {
+        this.save(now, [...this.list(now), ...oldList]);
+        this.save(old, []);
+      }
+      const oldVideo = store.get('jj-video:' + old);
+      if (oldVideo) {
+        if (!store.get('jj-video:' + now)) store.set('jj-video:' + now, oldVideo);
+        store.set('jj-video:' + old, '');
+      }
+    });
+  };
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const when = ms => new Date(ms).toLocaleString(undefined,
     { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -51,17 +66,21 @@
   const Panel = {
     onNavigate: () => {},
     onClose: () => {},
+    onJournal: () => {},  // open the training journal (optionally at one entry)
     page: 0,          // 0 = main page, 1 = notes page
     drafts: {},       // unsent note text per move, kept while the app is open
   };
 
   Panel.init = function (root) {
+    Notes.migrateRenamed();
     this.root = root;
     this.body = root.querySelector('.panel-body');
     root.querySelector('.panel-close').addEventListener('click', () => this.onClose());
     this.body.addEventListener('click', e => {
       const chip = e.target.closest('[data-go]');
-      if (chip) return this.onNavigate(chip.dataset.go);
+      if (chip) return this.onNavigate(chip.dataset.go, chip.dataset.place);
+      const entry = e.target.closest('[data-journal]');
+      if (entry) return this.onJournal(entry.dataset.journal);
       const tab = e.target.closest('[data-page]');
       if (tab) return this.showPage(+tab.dataset.page, true);
     });
@@ -70,15 +89,19 @@
   Panel.close = function () {
     this.root.classList.remove('open');
     this.current = null;
+    this.mode = null;
   };
 
-  Panel.open = function (id) {
+  // `place` = which of the move's places to show (for moves done from several positions).
+  Panel.open = function (id, place) {
     const n = JJ.byId[id];
     const same = id === this.current;
     const oldMain = same && this.body.querySelector('.page-main');
-    const keepScroll = oldMain ? oldMain.scrollTop : 0;
+    const keepScroll = oldMain && place === this.place ? oldMain.scrollTop : 0;
     if (!same) this.page = 0;           // a new move always starts on its main page
     this.current = id;
+    this.place = place;
+    this.mode = 'item';
 
     const mainLabel = n.type === 'position' ? 'Position' : 'Technique';
     this.body.innerHTML = `
@@ -87,7 +110,7 @@
         <button role="tab" data-page="1">Notes <span class="tab-count"></span></button>
       </div>
       <div class="pages">
-        <div class="page page-main">${n.type === 'position' ? positionHTML(n) : techniqueHTML(n)}</div>
+        <div class="page page-main">${n.type === 'position' ? positionHTML(n) : techniqueHTML(n, place)}</div>
         <div class="page page-notes"></div>
       </div>`;
     this.root.classList.add('open');
@@ -143,8 +166,10 @@
     const id = this.current;
     const n = JJ.byId[id];
     const list = Notes.list(id);
+    const fromJournal = JJ.Journal.entriesAbout(id);
     const page = this.body.querySelector('.page-notes');
-    this.body.querySelector('.tab-count').textContent = list.length ? '· ' + list.length : '';
+    const total = list.length + fromJournal.length;
+    this.body.querySelector('.tab-count').textContent = total ? '· ' + total : '';
 
     page.innerHTML = `
       <h2>${esc(n.name)}</h2>
@@ -156,6 +181,12 @@
         <textarea class="note-new" rows="4" placeholder="What clicked today? Details your coach mentioned?"></textarea>
         <button class="btn btn-primary note-add">Add note</button>
       </div>
+      <section class="from-journal">
+        <h3>${BOOK} From my training journal ${fromJournal.length ? `<span class="count">· ${fromJournal.length}</span>` : ''}</h3>
+        ${fromJournal.length
+          ? fromJournal.map(e => snippetHTML(e, id)).join('')
+          : `<p class="muted">No journal entries mention ${esc(n.name)} yet. When you write about it in your training journal, it shows up here.</p>`}
+      </section>
       ${communityHTML()}`;
 
     const box = page.querySelector('.note-new');
@@ -206,6 +237,150 @@
     if (scrollToEnd) page.scrollTop = page.scrollHeight;
   };
 
+  const BOOK = '<svg class="icon-book" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>';
+
+  // A short piece of a journal entry around where it mentions `id`, with the mention in bold.
+  function snippetHTML(entry, id) {
+    const m = JJ.Journal.findMentions(entry.text).find(x => x.id === id);
+    const text = entry.text;
+    const from = Math.max(0, m.start - 70), to = Math.min(text.length, m.end + 110);
+    const before = (from > 0 ? '…' : '') + text.slice(from, m.start);
+    const after = text.slice(m.end, to) + (to < text.length ? '…' : '');
+    return `
+      <button class="journal-snippet" data-journal="${esc(entry.id)}">
+        <span class="snippet-date">${esc(when(entry.created))}</span>
+        <span class="snippet-text">${esc(before)}<b>${esc(text.slice(m.start, m.end))}</b>${esc(after)}</span>
+        <span class="snippet-open">Open entry →</span>
+      </button>`;
+  }
+
+  // ---------------------------------------------------------------------------
+  // TRAINING JOURNAL PAGE — free writing about whole classes. Oldest first,
+  // with the box for a new entry at the bottom (it opens scrolled down there).
+  // ---------------------------------------------------------------------------
+  Panel.openJournal = function (focusEntryId) {
+    this.mode = 'journal';
+    this.current = null;
+    this.place = null;
+    this.root.classList.add('open');
+    this.renderJournal(focusEntryId);
+  };
+
+  Panel.renderJournal = function (focusEntryId) {
+    const J = JJ.Journal;
+    const list = J.list();
+    this.body.innerHTML = `
+      <div class="journal-head">
+        <h2>${BOOK} Training journal</h2>
+        <p class="muted small">Write about class. Moves and positions you mention turn into links. Saved on this device.</p>
+      </div>
+      <div class="journal-scroll">
+        <div class="journal-list">
+          ${list.length ? list.map(entryHTML).join('') : '<p class="muted note-empty">No entries yet. How did class go today?</p>'}
+        </div>
+        <div class="note-compose">
+          <label class="compose-date">${esc(new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))}</label>
+          <textarea class="journal-new" rows="6" placeholder="What did you work on? What worked, what didn't? Mention moves by name, like ‘hit a scissor sweep’, and they’ll link up."></textarea>
+          <button class="btn btn-primary journal-add">Save entry</button>
+        </div>
+      </div>`;
+
+    const scroll = this.body.querySelector('.journal-scroll');
+    const box = this.body.querySelector('.journal-new');
+    box.value = this.drafts.__journal || '';
+    box.addEventListener('input', () => { this.drafts.__journal = box.value; });
+    const add = () => {
+      const text = box.value.trim();
+      if (!text) return box.focus();
+      J.add(text);
+      delete this.drafts.__journal;
+      this.renderJournal();
+    };
+    this.body.querySelector('.journal-add').addEventListener('click', add);
+    box.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add(); });
+
+    this.body.querySelector('.journal-list').addEventListener('click', e => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      e.stopPropagation();
+      const card = btn.closest('.journal-entry');
+      const entryId = card.dataset.entry;
+      const entry = J.list().find(x => x.id === entryId);
+      const act = btn.dataset.act;
+      if (act === 'delete') {
+        if (!confirm('Delete this journal entry? This can\'t be undone.')) return;
+        J.remove(entryId);
+        this.renderJournal();
+      } else if (act === 'unlink') {
+        J.update(entryId, { unlinked: [...(entry.unlinked || []), btn.dataset.id] });
+        this.renderJournal(entryId);
+      } else if (act === 'edit') {
+        card.querySelector('.entry-body').innerHTML = `
+          <textarea class="note-edit" rows="6"></textarea>
+          <div class="note-edit-actions">
+            <button class="btn" data-act="cancel">Cancel</button>
+            <button class="btn btn-primary" data-act="save">Save</button>
+          </div>`;
+        const ta = card.querySelector('.note-edit');
+        ta.value = entry.text;
+        ta.focus();
+      } else if (act === 'save') {
+        const text = card.querySelector('.note-edit').value.trim();
+        if (!text) return;
+        J.update(entryId, { text, edited: Date.now() });
+        this.renderJournal(entryId);
+      } else if (act === 'cancel') {
+        this.renderJournal(entryId);
+      }
+    });
+
+    const target = focusEntryId && this.body.querySelector(`[data-entry="${CSS.escape(focusEntryId)}"]`);
+    if (target) {
+      target.scrollIntoView({ block: 'center' });
+      target.classList.add('flash');
+    } else {
+      scroll.scrollTop = scroll.scrollHeight;     // open at the newest entry and the writing box
+    }
+  };
+
+  // Entry text with every spotted move/position turned into a link.
+  function linkify(entry) {
+    const skip = new Set(entry.unlinked || []);
+    let html = '', at = 0;
+    JJ.Journal.findMentions(entry.text).forEach(m => {
+      if (skip.has(m.id)) return;
+      html += esc(entry.text.slice(at, m.start)) +
+        `<button class="jlink" data-go="${m.id}">${esc(entry.text.slice(m.start, m.end))}</button>`;
+      at = m.end;
+    });
+    return html + esc(entry.text.slice(at));
+  }
+
+  function entryHTML(entry) {
+    const ids = JJ.Journal.mentionsOf(entry);
+    const meta = entry.edited ? ` · edited ${esc(when(entry.edited))}` : '';
+    const mentions = ids.length ? `
+      <div class="entry-mentions">
+        <span class="muted small">Linked:</span>
+        ${ids.map(id => `<span class="mention-chip"><button data-go="${id}">${esc(JJ.byId[id].name)}</button><button class="unlink" data-act="unlink" data-id="${id}" aria-label="Unlink ${esc(JJ.byId[id].name)}" title="Not about this move? Unlink it">×</button></span>`).join('')}
+      </div>` : '';
+    return `
+      <article class="journal-entry" data-entry="${esc(entry.id)}">
+        <header>
+          <time datetime="${new Date(entry.created).toISOString()}">${esc(when(entry.created))}</time>
+          <span class="muted small">${meta}</span>
+        </header>
+        <div class="entry-body">
+          <p class="note-text">${linkify(entry)}</p>
+          ${mentions}
+          <div class="note-actions">
+            <button class="link-btn" data-act="edit">Edit</button>
+            <button class="link-btn danger" data-act="delete">Delete</button>
+          </div>
+        </div>
+      </article>`;
+  }
+
   function noteHTML(note) {
     const meta = note.imported ? ' · moved from your old notes'
       : note.edited ? ` · edited ${esc(when(note.edited))}` : '';
@@ -225,14 +400,17 @@
       </article>`;
   }
 
-  // A clickable "chip" that jumps to another technique or position.
-  function chip(id, extra) {
+  // A clickable "chip" that jumps to another move or position.
+  // For a move, `place` picks which of its places (default: its first).
+  function chip(id, extra, place) {
     const n = JJ.byId[id];
-    const pos = n.type === 'position' ? n : JJ.byId[JJ.byId[n.category].position];
+    const pl = n.type === 'technique' ? JJ.placeOf(n, place) : null;
+    const pos = pl ? JJ.positionOf(pl) : n;
     const tag = n.type === 'position' ? '<span class="chip-tag">position</span>' : '';
-    const dot = n.type === 'technique' ? `dot role-${n.role}` : 'dot';
-    const off = n.type === 'technique' && !JJ.matches(n) ? ' off' : '';
-    return `<button class="chip${off}" data-go="${n.id}" style="--c:${pos.color}">
+    const dot = pl ? `dot role-${pl.role}` : 'dot';
+    const off = pl && !JJ.matches(n, place ? pl : null) ? ' off' : '';
+    const placeAttr = place ? ` data-place="${esc(place)}"` : '';
+    return `<button class="chip${off}" data-go="${n.id}"${placeAttr} style="--c:${pos.color}">
       <span class="${dot}"></span>${esc(n.name)}${tag}${extra ? `<span class="chip-tag">${esc(extra)}</span>` : ''}</button>`;
   }
 
@@ -242,30 +420,45 @@
       : `<p class="muted">${empty}</p>`;
   }
 
-  function techniqueHTML(t) {
-    const cat = JJ.byId[t.category];
-    const pos = JJ.byId[cat.position];
-    const role = { top: 'You: Top', bottom: 'You: Bottom', neutral: 'Standing' }[t.role];
-    const badges = `<span class="badge role ${t.role}"><span class="role-dot"></span>${role}</span>` +
+  const ROLE_LABEL = { top: 'You: Top', bottom: 'You: Bottom', neutral: 'Standing' };
+
+  function techniqueHTML(t, placeId) {
+    const pl = JJ.placeOf(t, placeId);
+    const cat = JJ.byId[pl.category];
+    const pos = JJ.positionOf(pl);
+    const badges = `<span class="badge role ${pl.role}"><span class="role-dot"></span>${ROLE_LABEL[pl.role]}</span>` +
       (t.gi ? '<span class="badge gi">Gi</span>' : '') + (t.nogi ? '<span class="badge nogi">No-Gi</span>' : '');
+    // Moves done from several positions get a switcher; links below follow the chosen place.
+    const doneFrom = t.places.length < 2 ? '' : `
+      <div class="done-from">
+        <span class="done-from-label">Done from</span>
+        ${t.places.map(p2 => {
+          const ps = JJ.positionOf(p2);
+          const on = p2 === pl;
+          return `<button class="place-btn${on ? ' active' : ''}" data-go="${t.id}" data-place="${p2.category}"
+            style="--c:${ps.color}" aria-pressed="${on}"><span class="dot role-${p2.role}"></span>${esc(ps.name)}</button>`;
+        }).join('')}
+      </div>`;
+    const fromWhere = t.places.length > 1 ? ` from ${esc(pos.name)}` : '';
     return `
       <div class="crumb"><button class="crumb-link" data-go="${pos.id}" style="--c:${pos.color}"><span class="dot"></span>${esc(pos.name)}</button>
         <span class="crumb-sep">›</span> ${esc(cat.name)}</div>
       <h2>${esc(t.name)}</h2>
       <div class="badges">${badges}</div>
+      ${doneFrom}
       <p class="desc">${esc(t.desc)}</p>
 
       <section class="links success">
-        <h3><span class="icon">✓</span> If it works, go to</h3>
-        ${chipList(t.success, 'This is a finish. If it works, they tap.')}
+        <h3><span class="icon">✓</span> If it works${fromWhere}, go to</h3>
+        ${chipList(pl.success, 'This is a finish. If it works, they tap.')}
       </section>
       <section class="links fail">
-        <h3><span class="icon">↻</span> If it fails, try</h3>
-        ${chipList(t.fail, 'No backup linked yet.')}
+        <h3><span class="icon">↻</span> If it fails${fromWhere}, try</h3>
+        ${chipList(pl.fail, 'No backup linked yet.')}
       </section>
       <section class="links related">
         <h3><span class="icon">∼</span> Related moves</h3>
-        ${chipList(t.related, 'None linked yet.')}
+        ${chipList(pl.related, 'None linked yet.')}
       </section>
 
       <section class="video">
@@ -285,7 +478,7 @@
     const flowChips = (list, key) => list.length
       ? `<div class="chips">${list.map(f => chip(f[key], f.label)).join('')}</div>`
       : '<p class="muted">None yet.</p>';
-    const count = p.cats.reduce((s, c) => s + c.techs.length, 0);
+    const count = p.cats.reduce((s, c) => s + c.spots.length, 0);
     return `
       <div class="crumb"><span class="dot" style="--c:${p.color}"></span> Position · ${count} moves</div>
       <h2>${esc(p.name)}</h2>
@@ -300,7 +493,7 @@
       </section>
       <section class="links">
         <h3>Inside this position</h3>
-        ${p.cats.map(c => `<h4>${esc(c.name)}</h4><div class="chips">${c.techs.map(t => chip(t.id)).join('')}</div>`).join('')}
+        ${p.cats.map(c => `<h4>${esc(c.name)}</h4><div class="chips">${c.spots.map(sp => chip(sp.tech.id, '', c.id)).join('')}</div>`).join('')}
       </section>`;
   }
 

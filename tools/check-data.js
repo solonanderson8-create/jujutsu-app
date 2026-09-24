@@ -18,17 +18,34 @@ if (Object.keys(byId).length !== all.length) {
 }
 categories.forEach(c => {
   if (!byId[c.position]) problems.push(`category "${c.id}" points at missing position "${c.position}"`);
-  if (!techniques.some(t => t.category === c.id)) problems.push(`category "${c.id}" has no moves`);
+  if (!techniques.some(t => t.places.some(pl => pl.category === c.id))) problems.push(`category "${c.id}" has no moves`);
 });
 techniques.forEach(t => {
-  const cat = byId[t.category];
-  if (!cat || cat.type !== 'category') problems.push(`"${t.id}" has unknown category "${t.category}"`);
-  if (!['top', 'bottom', 'neutral'].includes(t.role)) problems.push(`"${t.id}" has bad role "${t.role}"`);
   if (!t.gi && !t.nogi) problems.push(`"${t.id}" is neither gi nor no-gi`);
-  ['success', 'fail', 'related'].forEach(kind => t[kind].forEach(id => {
-    if (!byId[id]) problems.push(`"${t.id}" ${kind} link points at missing "${id}"`);
-    else if (id === t.id) problems.push(`"${t.id}" links to itself`);
-  }));
+  const seen = new Set();
+  t.places.forEach(pl => {
+    const where = `"${t.id}" at ${pl.category}`;
+    const cat = byId[pl.category];
+    if (!cat || cat.type !== 'category') problems.push(`${where}: unknown category`);
+    if (seen.has(pl.category)) problems.push(`${where}: same place listed twice`);
+    seen.add(pl.category);
+    if (!['top', 'bottom', 'neutral'].includes(pl.role)) problems.push(`${where}: bad role "${pl.role}"`);
+    ['success', 'fail', 'related'].forEach(kind => {
+      if (new Set(pl[kind]).size !== pl[kind].length) problems.push(`${where}: ${kind} lists a link twice`);
+      pl[kind].forEach(id => {
+        if (!byId[id]) problems.push(`${where}: ${kind} link points at missing "${id}"`);
+        else if (id === t.id) problems.push(`${where}: links to itself`);
+      });
+    });
+  });
+});
+Object.entries(window.JJ.aliases).forEach(([id, list]) => {
+  if (!byId[id]) problems.push(`nickname list points at missing "${id}"`);
+  if (!Array.isArray(list) || !list.length) problems.push(`nickname list for "${id}" is empty`);
+});
+Object.entries(window.JJ.renamed).forEach(([old, now]) => {
+  if (byId[old]) problems.push(`old id "${old}" still exists (should be merged into "${now}")`);
+  if (!byId[now]) problems.push(`renamed id "${old}" points at missing "${now}"`);
 });
 flows.forEach(f => {
   if (!byId[f.from] || !byId[f.to]) problems.push(`flow ${f.from} -> ${f.to} has a missing end`);
@@ -38,4 +55,5 @@ if (problems.length) {
   console.error(problems.length + ' problem(s):\n  ' + problems.join('\n  '));
   process.exit(1);
 }
-console.log(`OK: ${positions.length} positions, ${categories.length} categories, ${techniques.length} moves, ${flows.length} flows.`);
+const places = techniques.reduce((n, t) => n + t.places.length, 0);
+console.log(`OK: ${positions.length} positions, ${categories.length} categories, ${techniques.length} moves in ${places} places, ${flows.length} flows.`);
