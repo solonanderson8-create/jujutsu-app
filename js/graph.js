@@ -45,13 +45,27 @@
   };
 
   // ---------------------------------------------------------------------------
-  // LAYOUT — work out where every category and technique sits.
-  // Categories orbit their position; techniques orbit their category.
+  // LAYOUT — work out where every category and move sits.
+  // Categories orbit their position; moves orbit their category.
+  //
+  // A "spot" is one dot on the web: a move at one of its places. Most moves
+  // have one spot; a move done from several positions (Armbar) has several,
+  // all opening the same move.
   // ---------------------------------------------------------------------------
   function layout() {
     const { positions, categories, techniques } = JJ.data;
     positions.forEach(p => { p.cats = categories.filter(c => c.position === p.id); });
-    categories.forEach(c => { c.techs = techniques.filter(t => t.category === c.id); });
+    categories.forEach(c => { c.spots = []; });
+    JJ.spots = [];
+    techniques.forEach(t => {
+      t.spots = t.places.map(place => {
+        const cat = JJ.byId[place.category];
+        const spot = { tech: t, place, cat, pos: JJ.byId[cat.position], key: t.id + '@' + cat.id };
+        cat.spots.push(spot);
+        JJ.spots.push(spot);
+        return spot;
+      });
+    });
 
     positions.forEach(p => {
       const n = p.cats.length;
@@ -60,12 +74,12 @@
         const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
         c.x = p.x + R.catRing * Math.cos(a);
         c.y = p.y + R.catRing * Math.sin(a);
-        const m = c.techs.length;
+        const m = c.spots.length;
         c.ring = Math.max(110, m * 28);
-        c.techs.forEach((t, j) => {
+        c.spots.forEach((sp, j) => {
           const b = a + (j * 2 * Math.PI) / m + (m > 1 ? Math.PI / m : 0);
-          t.x = c.x + c.ring * Math.cos(b);
-          t.y = c.y + c.ring * Math.sin(b);
+          sp.x = c.x + c.ring * Math.cos(b);
+          sp.y = c.y + c.ring * Math.sin(b);
         });
         reach = Math.max(reach, R.catRing + c.ring);
       });
@@ -124,25 +138,25 @@
       c.el = g;
     });
 
-    techniques.forEach(t => {
-      const c = JJ.byId[t.category];
-      const p = JJ.byId[c.position];
-      el('line', { x1: c.x, y1: c.y, x2: t.x, y2: t.y, class: 'spoke', style: `--c:${p.color}` }, L.techSpokes);
-      const g = el('g', { class: 'node tech-node role-' + t.role, 'data-id': t.id, style: `--c:${p.color}` }, L.techs);
-      el('circle', { cx: t.x, cy: t.y, r: R.tech }, g);
-      const label = el('text', { x: t.x, y: t.y + R.tech, dy: '1.2em', 'text-anchor': 'middle' }, g);
-      label.textContent = t.name;
-      t.el = g;
+    JJ.spots.forEach(sp => {
+      const { cat: c, pos: p } = sp;
+      el('line', { x1: c.x, y1: c.y, x2: sp.x, y2: sp.y, class: 'spoke', style: `--c:${p.color}` }, L.techSpokes);
+      const g = el('g', { class: 'node tech-node role-' + sp.place.role, 'data-id': sp.tech.id, 'data-place': c.id, style: `--c:${p.color}` }, L.techs);
+      el('circle', { cx: sp.x, cy: sp.y, r: R.tech }, g);
+      const label = el('text', { x: sp.x, y: sp.y + R.tech, dy: '1.2em', 'text-anchor': 'middle' }, g);
+      label.textContent = sp.tech.name;
+      sp.el = g;
     });
 
-    // Faint "web" of every technique-to-technique link, like Obsidian.
+    // Faint "web" of every move-to-move link, like Obsidian.
     this.techLinks = [];
-    techniques.forEach(t => {
-      ['success', 'fail'].forEach(kind => t[kind].forEach(id => {
+    JJ.spots.forEach(sp => {
+      ['success', 'fail'].forEach(kind => sp.place[kind].forEach(id => {
         const u = JJ.byId[id];
         if (u.type !== 'technique') return;
-        const line = el('line', { x1: t.x, y1: t.y, x2: u.x, y2: u.y, class: 'tlink' }, L.techLinks);
-        this.techLinks.push({ line, a: t, b: u });
+        const to = nearestSpot(u, sp);
+        const line = el('line', { x1: sp.x, y1: sp.y, x2: to.x, y2: to.y, class: 'tlink' }, L.techLinks);
+        this.techLinks.push({ line, a: sp, b: to });
       }));
     });
 
@@ -159,13 +173,13 @@
     svg.addEventListener('click', e => {
       if (this.dragged) return;
       const node = e.target.closest('.node');
-      if (node) this.onSelect(node.dataset.id);
+      if (node) this.onSelect(node.dataset.id, node.dataset.place);
       else this.onBackground();
     });
     svg.addEventListener('pointerover', e => {
       if (e.pointerType !== 'mouse') return;
       const node = e.target.closest('.tech-node, .pos-node');
-      this.setHover(node ? node.dataset.id : null);
+      this.setHover(node ? { id: node.dataset.id, place: node.dataset.place } : null);
     });
     svg.addEventListener('pointerleave', () => this.setHover(null));
 
@@ -249,37 +263,63 @@
   // ---------------------------------------------------------------------------
   // FOCUS — highlight a technique and draw its success / fail / related arrows.
   // ---------------------------------------------------------------------------
-  Graph.select = function (id) { this.selected = id; this.refreshFocus(); };
-  Graph.setHover = function (id) {
-    if (id === this.hovered) return;
-    this.hovered = id;
+  // The spot of move `t` closest to `near` (so arrows take the short route).
+  function nearestSpot(t, near) {
+    let best = t.spots[0], d = Infinity;
+    t.spots.forEach(sp => {
+      const dd = Math.hypot(sp.x - near.x, sp.y - near.y);
+      if (dd < d) { d = dd; best = sp; }
+    });
+    return best;
+  }
+
+  // Which spot a move means here: the given place, else the one nearest the camera.
+  Graph.spotFor = function (id, place) {
+    const t = JJ.byId[id];
+    return t.spots.find(sp => sp.cat.id === place) || nearestSpot(t, this.centerWorld());
+  };
+
+  // Focus = { id, place? }. `place` only matters for moves.
+  Graph.select = function (focus) { this.selected = focus; this.refreshFocus(); };
+  Graph.setHover = function (focus) {
+    const same = (a, b) => (a && a.id) === (b && b.id) && (a && a.place) === (b && b.place);
+    if (same(focus, this.hovered)) return;
+    this.hovered = focus;
     this.refreshFocus();
   };
 
-  Graph.focusLinks = [];  // [{ from, to, kind }] for the focused technique
+  Graph.focusLinks = [];  // [{ from, to, kind }] for the focused spot
 
   Graph.refreshFocus = function () {
-    const id = this.hovered || this.selected;
+    const focus = this.hovered || this.selected;
     this.focusLinks = [];
     this.layers.hi.textContent = '';
     this.svg.querySelectorAll('.lit, .sel').forEach(n => n.classList.remove('lit', 'sel'));
-    this.svg.classList.toggle('has-focus', !!id);
-    if (!id) return;
+    this.svg.classList.toggle('has-focus', !!focus);
+    if (!focus) return;
 
+    const id = focus.id;
     const n = JJ.byId[id];
     const lit = x => x.el && x.el.classList.add('lit');
-    lit(n);
-    n.el.classList.add('sel');
 
     if (n.type === 'technique') {
-      lit(JJ.byId[n.category]);
-      LINK_KINDS.forEach(kind => n[kind].forEach(tid => {
+      const sp = this.spotFor(id, focus.place);
+      lit(sp);
+      sp.el.classList.add('sel');
+      n.spots.forEach(lit);            // the same move elsewhere lights up too
+      lit(sp.cat);
+      LINK_KINDS.forEach(kind => sp.place[kind].forEach(tid => {
         const u = JJ.byId[tid];
-        lit(u);
-        this.focusLinks.push({ from: n, to: u, kind });
+        const to = u.type === 'technique' ? nearestSpot(u, sp) : u;
+        lit(to);
+        this.focusLinks.push({ from: sp, to, kind });
       }));
       this.drawFocus();
+    } else if (n.type === 'category') {
+      lit(n);
     } else if (n.type === 'position') {
+      lit(n);
+      n.el.classList.add('sel');
       this.flowEls.forEach(({ f, g }) => {
         if (f.from === id || f.to === id) {
           g.classList.add('lit');
@@ -305,7 +345,7 @@
     const pinR = Math.max(R.tech, 6 / k);           // never smaller than 6px on screen
     const pinsShown = 1 - this.techT;               // pins fade out once real dots are visible
     const endR = u => u.type === 'position' ? lerp(R.pos + 10, u.r + 6, this.catT)
-      : u.type === 'category' ? R.cat + 6 : pinR + 7 / k;
+      : u.type === 'category' ? R.cat + 6 : pinR + 7 / k;   // anything else is a move's spot
 
     this.focusLinks.forEach(({ from, to, kind }) => {
       const c = curve(from, to, pinR + 4 / k, endR(to), kind === 'fail' ? -0.18 : 0.18);
@@ -315,28 +355,27 @@
 
     if (pinsShown < 0.01) return;
     const pins = el('g', { class: 'pins', style: `opacity:${pinsShown}` }, hi);
-    const techs = [this.focusLinks[0].from, ...this.focusLinks.map(l => l.to)]
-      .filter((t, i, all) => t.type === 'technique' && all.indexOf(t) === i);
+    const spots = [this.focusLinks[0].from, ...this.focusLinks.map(l => l.to)]
+      .filter((sp, i, all) => sp.tech && all.indexOf(sp) === i);
     // Label each pin unless it would sit on top of a label already placed
     // (the focused move goes first, so it always keeps its label).
     const placed = [];
-    techs.forEach((t, i) => {
-      const p = JJ.byId[JJ.byId[t.category].position];
-      const g = el('g', { class: 'pin role-' + t.role + (i === 0 ? ' pin-main' : ''), 'data-id': t.id, style: `--c:${p.color}` }, pins);
-      el('circle', { cx: t.x, cy: t.y, r: pinR }, g);
-      const crowded = placed.some(q => Math.abs(q.x - t.x) * k < 90 && Math.abs(q.y - t.y) * k < 22);
+    spots.forEach((sp, i) => {
+      const g = el('g', { class: 'pin role-' + sp.place.role + (i === 0 ? ' pin-main' : ''), style: `--c:${sp.pos.color}` }, pins);
+      el('circle', { cx: sp.x, cy: sp.y, r: pinR }, g);
+      const crowded = placed.some(q => Math.abs(q.x - sp.x) * k < 90 && Math.abs(q.y - sp.y) * k < 22);
       if (crowded) return;
-      placed.push(t);
-      const label = el('text', { x: t.x, y: t.y + pinR, dy: '1.2em', 'text-anchor': 'middle' }, g);
-      label.textContent = t.name;
+      placed.push(sp);
+      const label = el('text', { x: sp.x, y: sp.y + pinR, dy: '1.2em', 'text-anchor': 'middle' }, g);
+      label.textContent = sp.tech.name;
     });
   };
 
   // Filters (Gi / No-Gi, Top / Bottom): dim techniques that don't match.
   Graph.refreshFilter = function () {
     const match = JJ.matches;
-    JJ.data.techniques.forEach(t => t.el.classList.toggle('off', !match(t)));
-    this.techLinks.forEach(({ line, a, b }) => line.classList.toggle('off', !match(a) || !match(b)));
+    JJ.spots.forEach(sp => sp.el.classList.toggle('off', !match(sp.tech, sp.place)));
+    this.techLinks.forEach(({ line, a, b }) => line.classList.toggle('off', !match(a.tech, a.place) || !match(b.tech, b.place)));
   };
 
   // ---------------------------------------------------------------------------
@@ -380,8 +419,9 @@
     this.flyTo((x0 + x1) / 2, (y0 + y1) / 2, Math.min(k, LOD.cat[0] - 0.02), dur);
   };
 
-  Graph.focusNode = function (id) {
-    const n = JJ.byId[id];
+  Graph.focusNode = function (id, place) {
+    let n = JJ.byId[id];
+    if (n.type === 'technique') n = this.spotFor(id, place);
     if (n.type === 'position') this.flyTo(n.x, n.y, clamp(fitK(n.r + 60), LOD.cat[1] + 0.05, LOD.tech[0] - 0.05));
     else if (n.type === 'category') this.flyTo(n.x, n.y, Math.max(fitK(n.ring + 90), LOD.tech[1] + 0.1));
     else this.flyTo(n.x, n.y, Math.max(this.view.k, 1.6));

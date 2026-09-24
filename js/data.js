@@ -128,11 +128,17 @@
   //   success: where to go if the move works
   //   fail:    what to try if it doesn't
   //   related: other moves worth knowing
+  //
+  // A move can be done from more than one place (e.g. Armbar from guard AND
+  // from mount). t() sets up its first place; `also(...)` further down adds
+  // more. Each place has its own top/bottom and its own links, but the move
+  // itself (name, description, notes, video) is shared — one move, many places.
   // ---------------------------------------------------------------------------
   const t = (id, name, category, style, role, desc, success = [], fail = [], related = []) => ({
-    id, name, category, role, desc, success, fail, related,
+    id, name, desc,
     gi: style !== 'nogi',
     nogi: style !== 'gi',
+    places: [{ category, role, success, fail, related }],
   });
 
   const techniques = [
@@ -151,7 +157,7 @@
       ['osoto-gari', 'seoi-nage', 'pull-closed-guard'], [], ['scissor-sweep']),
     t('snap-down', 'Snap Down', 'st-grips', 'both', 'neutral',
       'From a collar tie, yank their head down sharply so their hands hit the mat. Their weight falls forward onto you.',
-      ['guillotine-standing', 'turtle', 'ankle-pick'], ['collar-tie'], ['sprawl']),
+      ['guillotine', 'turtle', 'ankle-pick'], ['collar-tie'], ['sprawl']),
 
     // ---- Standing: Guard Pulls ----
     t('pull-closed-guard', 'Pull Closed Guard', 'st-pulls', 'both', 'neutral',
@@ -189,10 +195,10 @@
     // ---- Takedowns: Defense ----
     t('sprawl', 'Sprawl', 'td-defense', 'both', 'neutral',
       'Shoot your legs back and drop your hips onto their head and shoulders. You become a heavy wedge they can\'t drive through.',
-      ['guillotine-standing', 'turtle'], ['pull-closed-guard'], ['snap-down']),
-    t('guillotine-standing', 'Guillotine (Standing)', 'td-defense', 'both', 'neutral',
-      'Wrap your arm around their neck from the front, forearm blade under the chin. Clasp hands, pull up, push your hips forward.',
-      [], ['pull-closed-guard'], ['guillotine-guard']),
+      ['guillotine', 'turtle'], ['pull-closed-guard'], ['snap-down']),
+    t('guillotine', 'Guillotine', 'td-defense', 'both', 'neutral',
+      'Wrap your arm around their neck from the front, forearm blade under the chin, and clasp your hands. Standing, pull up and push your hips forward; from guard, close your legs and arch.',
+      [], ['pull-closed-guard'], []),
 
     // ---- Closed Guard: Sweeps ----
     t('scissor-sweep', 'Scissor Sweep', 'cg-sweeps', 'both', 'bottom',
@@ -200,30 +206,27 @@
       ['mount'], ['hip-bump-sweep', 'flower-sweep'], ['collar-sleeve']),
     t('hip-bump-sweep', 'Hip Bump Sweep', 'cg-sweeps', 'both', 'bottom',
       'When they sit up tall, sit up too, post a hand behind you, and bump your hip into them to roll them over.',
-      ['mount'], ['kimura-guard', 'guillotine-guard'], ['scissor-sweep']),
+      ['mount'], ['kimura', 'guillotine'], ['scissor-sweep']),
     t('flower-sweep', 'Flower (Pendulum) Sweep', 'cg-sweeps', 'both', 'bottom',
       'Trap an arm and grab the far leg. Swing your leg like a pendulum to lift them and roll them toward the trapped arm, so they can\'t post.',
-      ['mount'], ['armbar-guard'], ['scissor-sweep']),
+      ['mount'], ['armbar'], ['scissor-sweep']),
 
     // ---- Closed Guard: Submissions ----
-    t('armbar-guard', 'Armbar', 'cg-subs', 'both', 'bottom',
-      'Control an arm, foot on their hip, spin sideways, and swing your leg over their head. Their elbow is a hinge; your hips bend it the wrong way.',
-      [], ['triangle', 'omoplata', 'flower-sweep'], ['armbar-mount']),
+    t('armbar', 'Armbar', 'cg-subs', 'both', 'bottom',
+      'Isolate one arm, pin their shoulder and head with your legs, and lift your hips into their elbow. The elbow is a hinge; your hips bend it the wrong way.',
+      [], ['triangle', 'omoplata', 'flower-sweep'], ['armbar-back', 'far-side-armbar']),
     t('triangle', 'Triangle Choke', 'cg-subs', 'both', 'bottom',
       'One of their arms in, one out. Lock your legs in a figure-four around their neck and the trapped arm. Their own shoulder squeezes one side of their neck.',
-      [], ['armbar-guard', 'omoplata'], ['spider-guard']),
+      [], ['armbar', 'omoplata'], ['spider-guard']),
     t('omoplata', 'Omoplata', 'cg-subs', 'both', 'bottom',
       'Swing your leg over their shoulder and turn to face their feet. Your legs crank their shoulder like turning a wrench. Often turns into a sweep.',
       ['side-control'], ['triangle'], ['lasso-guard']),
-    t('kimura-guard', 'Kimura', 'cg-subs', 'both', 'bottom',
-      'Grab their wrist, reach over their arm and grab your own wrist (a figure-four), then rotate their hand up behind their back.',
-      [], ['hip-bump-sweep', 'guillotine-guard'], ['kimura-top']),
-    t('guillotine-guard', 'Guillotine', 'cg-subs', 'both', 'bottom',
-      'Wrap their neck from the front as they posture down, close your guard, and arch while pulling up on the chin.',
-      [], ['hip-bump-sweep'], ['guillotine-standing']),
+    t('kimura', 'Kimura', 'cg-subs', 'both', 'bottom',
+      'Grab their wrist, reach around their arm and grab your own wrist (a figure-four), then rotate their hand up behind their back like cranking a handle.',
+      [], ['hip-bump-sweep', 'guillotine'], ['americana']),
     t('cross-collar', 'Cross Collar Choke', 'cg-subs', 'gi', 'bottom',
       'Deep grip in one side of their collar, other hand crosses to the other side. Pull your elbows apart and down, like wringing out a towel.',
-      [], ['armbar-guard'], ['cross-collar-mount']),
+      [], ['armbar'], ['bow-arrow']),
 
     // ---- Closed Guard: Back Takes ----
     t('arm-drag-guard', 'Arm Drag', 'cg-back', 'both', 'bottom',
@@ -278,7 +281,7 @@
       [], ['straight-ankle-lock'], ['single-leg-x']),
     t('kneebar', 'Kneebar', 'og-leglocks', 'both', 'bottom',
       'Hug their leg, hips against the back of their knee, and extend. Like an armbar, but for the leg.',
-      [], ['straight-ankle-lock'], ['armbar-guard']),
+      [], ['straight-ankle-lock'], ['armbar']),
 
     // ---- Open Guard: Passing (Top) ----
     t('toreando', 'Toreando Pass', 'og-pass', 'both', 'top',
@@ -297,7 +300,7 @@
     // ---- Half Guard: Bottom ----
     t('knee-shield', 'Knee Shield (Z-Guard)', 'hg-sweeps', 'both', 'bottom',
       'Top knee across their chest like a wall, bottom leg traps their leg. It keeps distance so they can\'t flatten you.',
-      ['underhook-dogfight', 'kimura-guard'], ['deep-half'], []),
+      ['underhook-dogfight', 'kimura'], ['deep-half'], []),
     t('underhook-dogfight', 'Underhook & Dogfight', 'hg-sweeps', 'both', 'bottom',
       'Get the underhook and come up onto your knees beside them. Now you are both on your knees, and you have the better angle.',
       ['old-school-sweep', 'back-control'], ['knee-shield'], ['underhook-turtle']),
@@ -344,10 +347,7 @@
     // ---- Side Control: Top ----
     t('americana', 'Americana', 'sc-subs', 'both', 'top',
       'Pin their wrist to the mat, figure-four their arm, then slide their hand toward their hip like a windshield wiper while lifting the elbow.',
-      [], ['kimura-top', 'sc-to-mount'], ['kimura-top']),
-    t('kimura-top', 'Kimura', 'sc-subs', 'both', 'top',
-      'Figure-four grip on their arm, then rotate their hand behind their back.',
-      [], ['americana', 'armbar-mount'], ['kimura-guard']),
+      [], ['kimura', 'sc-to-mount'], ['kimura']),
     t('arm-triangle', 'Arm Triangle', 'sc-subs', 'both', 'top',
       'Trap their head and one arm inside your arms, drop to the side, and squeeze. Their own shoulder does the choking.',
       [], ['mount'], ['triangle']),
@@ -372,7 +372,7 @@
     // ---- Knee on Belly: Top ----
     t('far-side-armbar', 'Far-Side Armbar', 'kob-subs', 'both', 'top',
       'When they push on your knee, step around their head and fall into an armbar on the arm they pushed with.',
-      [], ['side-control'], ['armbar-mount']),
+      [], ['side-control'], ['armbar']),
     t('kob-to-mount', 'Knee on Belly to Mount', 'kob-trans', 'both', 'top',
       'If they turn toward you, slide your knee straight over into mount.',
       ['mount'], ['side-control'], []),
@@ -402,7 +402,7 @@
       [], ['rnc'], ['cross-collar']),
     t('armbar-back', 'Armbar from Back', 'bc-subs', 'both', 'top',
       'When they fight your choking hands, trap an arm, swing your leg over their head, and fall into an armbar.',
-      [], ['mount'], ['armbar-mount']),
+      [], ['mount'], ['armbar']),
 
     // ---- Back Control: Escapes ----
     t('back-escape', 'Shoulder Walk Escape', 'bc-escapes', 'both', 'bottom',
@@ -410,21 +410,12 @@
       ['half-guard'], ['granby'], []),
 
     // ---- Mount: Top ----
-    t('armbar-mount', 'Armbar', 'mt-subs', 'both', 'top',
-      'When they push on you, isolate one arm, pivot, and fall back with your legs across their chest.',
-      [], ['s-mount', 'side-control'], ['armbar-guard']),
     t('ezekiel', 'Ezekiel Choke', 'mt-subs', 'both', 'top',
       'Thread one arm behind their neck and grab your own sleeve (or wrist), then drive the blade of your other hand across their throat.',
-      [], ['armbar-mount'], []),
+      [], ['armbar'], []),
     t('s-mount', 'S-Mount', 'mt-trans', 'both', 'top',
       'Shift your legs into an S shape with one arm trapped. A launch pad for armbars and chokes.',
-      ['armbar-mount'], ['side-control'], []),
-    t('cross-collar-mount', 'Cross Collar Choke', 'mt-subs', 'gi', 'top',
-      'Same as from guard: deep cross grips, then drop your elbows and head to the mat to tighten.',
-      [], ['armbar-mount'], ['cross-collar']),
-    t('arm-triangle-mount', 'Arm Triangle', 'mt-subs', 'both', 'top',
-      'Trap head and arm, slide off to the side, and squeeze.',
-      [], ['side-control'], ['arm-triangle']),
+      ['armbar'], ['side-control'], []),
 
     // ---- Mount: Bottom ----
     t('upa', 'Trap & Roll (Upa)', 'mt-escapes', 'both', 'bottom',
@@ -435,22 +426,62 @@
       ['half-guard', 'closed-guard'], ['upa'], ['shrimp-reguard']),
   ];
 
+  // ---------------------------------------------------------------------------
+  // EXTRA PLACES — moves that are also done from another position.
+  // also(id, category, role, success, fail, related)
+  // ---------------------------------------------------------------------------
+  const also = (id, category, role, success = [], fail = [], related = []) =>
+    ({ id, place: { category, role, success, fail, related } });
+
+  const extraPlaces = [
+    also('guillotine', 'cg-subs', 'bottom', [], ['hip-bump-sweep'], []),
+    also('armbar', 'mt-subs', 'top', [], ['s-mount', 'side-control'], ['armbar-back']),
+    also('kimura', 'sc-subs', 'top', [], ['americana', 'armbar'], ['americana']),
+    also('cross-collar', 'mt-subs', 'top', [], ['armbar'], []),
+    also('arm-triangle', 'mt-subs', 'top', [], ['side-control'], []),
+  ];
+
+  // Moves that used to be separate copies, and the single move they became.
+  // Used to carry over notes and old links saved before the merge.
+  const renamed = {
+    'armbar-guard': 'armbar', 'armbar-mount': 'armbar',
+    'kimura-guard': 'kimura', 'kimura-top': 'kimura',
+    'arm-triangle-mount': 'arm-triangle', 'cross-collar-mount': 'cross-collar',
+    'guillotine-standing': 'guillotine', 'guillotine-guard': 'guillotine',
+  };
+  // …and which place each old copy was, so an old link opens the right spot.
+  const renamedPlace = {
+    'armbar-mount': 'mt-subs', 'kimura-top': 'sc-subs', 'arm-triangle-mount': 'mt-subs',
+    'cross-collar-mount': 'mt-subs', 'guillotine-guard': 'cg-subs',
+  };
+
   // Build a lookup table: id -> object (and tag each object with its type).
   const byId = {};
   positions.forEach(p => { p.type = 'position'; byId[p.id] = p; });
   categories.forEach(c => { c.type = 'category'; byId[c.id] = c; });
   techniques.forEach(tq => { tq.type = 'technique'; byId[tq.id] = tq; });
+  extraPlaces.forEach(x => byId[x.id].places.push(x.place));
 
-  // Does a technique pass the current filters? Used by the map and the panel.
-  // Standing moves ('neutral') count for both top and bottom.
+  // Where a move sits: its category and position. `place` defaults to the first.
+  const placeOf = (tq, category) => tq.places.find(pl => pl.category === category) || tq.places[0];
+  const positionOf = place => byId[byId[place.category].position];
+
+  // Does a move (at a given place) pass the current filters? Used by the map
+  // and the panel. Standing moves ('neutral') count for both top and bottom.
+  // With no place given, the move passes if ANY of its places does.
   const filter = { style: 'all', role: 'all' };
-  const matches = tq =>
+  const roleOk = pl => filter.role === 'all' || pl.role === filter.role || pl.role === 'neutral';
+  const matches = (tq, place) =>
     (filter.style === 'all' || tq[filter.style]) &&
-    (filter.role === 'all' || tq.role === filter.role || tq.role === 'neutral');
+    (place ? roleOk(place) : tq.places.some(roleOk));
 
   window.JJ = window.JJ || {};
   window.JJ.filter = filter;
   window.JJ.matches = matches;
+  window.JJ.placeOf = placeOf;
+  window.JJ.positionOf = positionOf;
+  window.JJ.renamed = renamed;
+  window.JJ.renamedPlace = renamedPlace;
   window.JJ.data = { positions, categories, techniques, flows };
   window.JJ.byId = byId;
 })();

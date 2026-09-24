@@ -30,8 +30,11 @@ Main uses: **studying at home** and **logging after class** (not quick gym looku
 - Seasonal themes (planned): add a new `[data-theme="name"]` block + the name to `THEMES` in `js/app.js`.
 
 ## Data rules (js/data.js)
-- Every technique: `t(id, name, category, style, role, desc, success, fail, related)`.
+- Every technique: `t(id, name, category, style, role, desc, success, fail, related)` — this sets its first **place**.
   - `style`: `'both' | 'gi' | 'nogi'`. `role`: `'top' | 'bottom' | 'neutral'` (neutral = both standing).
+  - A move done from more positions gets extra places via `also(id, category, role, success, fail, related)` in `extraPlaces`. Each place has its own role and links; name, description, notes and video are shared. Never create a second copy of a move — add a place instead.
+  - On the web each place is a "spot" (`JJ.spots`); links are drawn to the nearest spot of the target move.
+  - Merged/renamed ids go in `renamed` (+ `renamedPlace`) so old notes and links carry over.
   - Categories are grouped by what the move *does* (Submissions, Escapes, Sweeps…), not by top/bottom. Top/bottom lives on each move's `role`.
   - Links (`success`, `fail`, `related`) hold ids of techniques or positions.
 - Descriptions: 1–2 plain sentences, ideally with a physical analogy.
