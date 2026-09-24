@@ -378,12 +378,57 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* Notes page: a timeline of note cards, newest at the bottom. */
 .note-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
-.note {
+.note, .journal-entry {
   padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--border);
   border-radius: 10px; border-left: 3px solid var(--accent);
 }
-.note header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
-.note time { font-size: 13px; font-weight: 700; color: var(--muted); }
+.note header, .journal-entry header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
+.note time, .journal-entry time { font-size: 13px; font-weight: 700; color: var(--muted); }
+
+/* ---------- Training journal ---------- */
+.icon-btn.with-label { width: auto; gap: 8px; padding: 0 14px; font-weight: 700; }
+.icon-btn.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.icon-book { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.panel h2 .icon-book, .panel h3 .icon-book { color: var(--accent); }
+.panel h2 .icon-book { width: 22px; height: 22px; vertical-align: -2px; margin-right: 4px; }
+.journal-head { padding: 16px 22px 8px; padding-right: 64px; flex: none; }
+.journal-head h2 { margin: 4px 0 2px; }
+.journal-head p { margin: 0; }
+.journal-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 22px 40px; overscroll-behavior-y: contain; }
+.journal-list { display: flex; flex-direction: column; gap: 12px; }
+.journal-entry.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.compose-date { font-weight: 700; color: var(--muted); font-size: 14px; }
+.journal-new {
+  width: 100%; padding: 10px 12px; font: inherit; color: var(--text); resize: vertical;
+  background: var(--field); border: 1px solid var(--border); border-radius: 8px; line-height: 1.5;
+}
+.journal-new:focus { outline: none; border-color: var(--accent); }
+
+/* Spotted move names inside journal text */
+.jlink {
+  display: inline; padding: 0; margin: 0; background: none; border: 0; font: inherit; color: var(--accent);
+  font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; cursor: pointer;
+}
+.entry-mentions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.mention-chip {
+  display: inline-flex; align-items: center; background: var(--field); border: 1px solid var(--border); border-radius: 999px; overflow: hidden;
+}
+.mention-chip button { background: none; border: 0; padding: 4px 4px 4px 12px; font-size: 14px; }
+.mention-chip .unlink { padding: 4px 10px 4px 6px; color: var(--muted); font-size: 16px; line-height: 1; }
+.mention-chip .unlink:hover { color: var(--danger); }
+
+/* "From my training journal" on a move's Notes tab */
+.journal-snippet {
+  display: flex; flex-direction: column; gap: 4px; width: 100%; margin-top: 10px; padding: 12px 14px; text-align: left;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; border-left: 3px solid var(--muted);
+}
+.journal-snippet:hover { border-color: var(--accent); }
+.snippet-date { font-size: 13px; font-weight: 700; color: var(--muted); }
+.snippet-text { font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.snippet-text b { color: var(--accent); }
+.snippet-open { font-size: 13px; font-weight: 700; color: var(--accent); align-self: flex-end; }
+.from-journal .count { color: var(--muted); font-weight: 400; }
 .note-text { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 16px; line-height: 1.55; }
 .note-actions, .note-edit-actions { display: flex; gap: 14px; justify-content: flex-end; margin-top: 6px; }
 .note-edit-actions { gap: 8px; }
@@ -403,6 +448,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* ---------- Phones: compact top bar ---------- */
 @media (max-width: 719px) {
   .brand { display: none; }
+  .icon-btn.with-label { width: 42px; padding: 0; }
+  .icon-btn.with-label .btn-label { display: none; }
   .search { max-width: none; }
   .levels button { padding: 5px 10px; font-size: 14px; }
   .filters { width: 100%; justify-content: space-between; gap: 6px; flex-wrap: nowrap; }

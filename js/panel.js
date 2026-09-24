@@ -66,6 +66,7 @@
   const Panel = {
     onNavigate: () => {},
     onClose: () => {},
+    onJournal: () => {},  // open the training journal (optionally at one entry)
     page: 0,          // 0 = main page, 1 = notes page
     drafts: {},       // unsent note text per move, kept while the app is open
   };
@@ -78,6 +79,8 @@
     this.body.addEventListener('click', e => {
       const chip = e.target.closest('[data-go]');
       if (chip) return this.onNavigate(chip.dataset.go, chip.dataset.place);
+      const entry = e.target.closest('[data-journal]');
+      if (entry) return this.onJournal(entry.dataset.journal);
       const tab = e.target.closest('[data-page]');
       if (tab) return this.showPage(+tab.dataset.page, true);
     });
@@ -86,6 +89,7 @@
   Panel.close = function () {
     this.root.classList.remove('open');
     this.current = null;
+    this.mode = null;
   };
 
   // `place` = which of the move's places to show (for moves done from several positions).
@@ -97,6 +101,7 @@
     if (!same) this.page = 0;           // a new move always starts on its main page
     this.current = id;
     this.place = place;
+    this.mode = 'item';
 
     const mainLabel = n.type === 'position' ? 'Position' : 'Technique';
     this.body.innerHTML = `
@@ -161,8 +166,10 @@
     const id = this.current;
     const n = JJ.byId[id];
     const list = Notes.list(id);
+    const fromJournal = JJ.Journal.entriesAbout(id);
     const page = this.body.querySelector('.page-notes');
-    this.body.querySelector('.tab-count').textContent = list.length ? '· ' + list.length : '';
+    const total = list.length + fromJournal.length;
+    this.body.querySelector('.tab-count').textContent = total ? '· ' + total : '';
 
     page.innerHTML = `
       <h2>${esc(n.name)}</h2>
@@ -174,6 +181,12 @@
         <textarea class="note-new" rows="4" placeholder="What clicked today? Details your coach mentioned?"></textarea>
         <button class="btn btn-primary note-add">Add note</button>
       </div>
+      <section class="from-journal">
+        <h3>${BOOK} From my training journal ${fromJournal.length ? `<span class="count">· ${fromJournal.length}</span>` : ''}</h3>
+        ${fromJournal.length
+          ? fromJournal.map(e => snippetHTML(e, id)).join('')
+          : `<p class="muted">No journal entries mention ${esc(n.name)} yet. When you write about it in your training journal, it shows up here.</p>`}
+      </section>
       ${communityHTML()}`;
 
     const box = page.querySelector('.note-new');
@@ -223,6 +236,150 @@
 
     if (scrollToEnd) page.scrollTop = page.scrollHeight;
   };
+
+  const BOOK = '<svg class="icon-book" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>';
+
+  // A short piece of a journal entry around where it mentions `id`, with the mention in bold.
+  function snippetHTML(entry, id) {
+    const m = JJ.Journal.findMentions(entry.text).find(x => x.id === id);
+    const text = entry.text;
+    const from = Math.max(0, m.start - 70), to = Math.min(text.length, m.end + 110);
+    const before = (from > 0 ? '…' : '') + text.slice(from, m.start);
+    const after = text.slice(m.end, to) + (to < text.length ? '…' : '');
+    return `
+      <button class="journal-snippet" data-journal="${esc(entry.id)}">
+        <span class="snippet-date">${esc(when(entry.created))}</span>
+        <span class="snippet-text">${esc(before)}<b>${esc(text.slice(m.start, m.end))}</b>${esc(after)}</span>
+        <span class="snippet-open">Open entry →</span>
+      </button>`;
+  }
+
+  // ---------------------------------------------------------------------------
+  // TRAINING JOURNAL PAGE — free writing about whole classes. Oldest first,
+  // with the box for a new entry at the bottom (it opens scrolled down there).
+  // ---------------------------------------------------------------------------
+  Panel.openJournal = function (focusEntryId) {
+    this.mode = 'journal';
+    this.current = null;
+    this.place = null;
+    this.root.classList.add('open');
+    this.renderJournal(focusEntryId);
+  };
+
+  Panel.renderJournal = function (focusEntryId) {
+    const J = JJ.Journal;
+    const list = J.list();
+    this.body.innerHTML = `
+      <div class="journal-head">
+        <h2>${BOOK} Training journal</h2>
+        <p class="muted small">Write about class. Moves and positions you mention turn into links. Saved on this device.</p>
+      </div>
+      <div class="journal-scroll">
+        <div class="journal-list">
+          ${list.length ? list.map(entryHTML).join('') : '<p class="muted note-empty">No entries yet. How did class go today?</p>'}
+        </div>
+        <div class="note-compose">
+          <label class="compose-date">${esc(new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))}</label>
+          <textarea class="journal-new" rows="6" placeholder="What did you work on? What worked, what didn't? Mention moves by name, like ‘hit a scissor sweep’, and they’ll link up."></textarea>
+          <button class="btn btn-primary journal-add">Save entry</button>
+        </div>
+      </div>`;
+
+    const scroll = this.body.querySelector('.journal-scroll');
+    const box = this.body.querySelector('.journal-new');
+    box.value = this.drafts.__journal || '';
+    box.addEventListener('input', () => { this.drafts.__journal = box.value; });
+    const add = () => {
+      const text = box.value.trim();
+      if (!text) return box.focus();
+      J.add(text);
+      delete this.drafts.__journal;
+      this.renderJournal();
+    };
+    this.body.querySelector('.journal-add').addEventListener('click', add);
+    box.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add(); });
+
+    this.body.querySelector('.journal-list').addEventListener('click', e => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      e.stopPropagation();
+      const card = btn.closest('.journal-entry');
+      const entryId = card.dataset.entry;
+      const entry = J.list().find(x => x.id === entryId);
+      const act = btn.dataset.act;
+      if (act === 'delete') {
+        if (!confirm('Delete this journal entry? This can\'t be undone.')) return;
+        J.remove(entryId);
+        this.renderJournal();
+      } else if (act === 'unlink') {
+        J.update(entryId, { unlinked: [...(entry.unlinked || []), btn.dataset.id] });
+        this.renderJournal(entryId);
+      } else if (act === 'edit') {
+        card.querySelector('.entry-body').innerHTML = `
+          <textarea class="note-edit" rows="6"></textarea>
+          <div class="note-edit-actions">
+            <button class="btn" data-act="cancel">Cancel</button>
+            <button class="btn btn-primary" data-act="save">Save</button>
+          </div>`;
+        const ta = card.querySelector('.note-edit');
+        ta.value = entry.text;
+        ta.focus();
+      } else if (act === 'save') {
+        const text = card.querySelector('.note-edit').value.trim();
+        if (!text) return;
+        J.update(entryId, { text, edited: Date.now() });
+        this.renderJournal(entryId);
+      } else if (act === 'cancel') {
+        this.renderJournal(entryId);
+      }
+    });
+
+    const target = focusEntryId && this.body.querySelector(`[data-entry="${CSS.escape(focusEntryId)}"]`);
+    if (target) {
+      target.scrollIntoView({ block: 'center' });
+      target.classList.add('flash');
+    } else {
+      scroll.scrollTop = scroll.scrollHeight;     // open at the newest entry and the writing box
+    }
+  };
+
+  // Entry text with every spotted move/position turned into a link.
+  function linkify(entry) {
+    const skip = new Set(entry.unlinked || []);
+    let html = '', at = 0;
+    JJ.Journal.findMentions(entry.text).forEach(m => {
+      if (skip.has(m.id)) return;
+      html += esc(entry.text.slice(at, m.start)) +
+        `<button class="jlink" data-go="${m.id}">${esc(entry.text.slice(m.start, m.end))}</button>`;
+      at = m.end;
+    });
+    return html + esc(entry.text.slice(at));
+  }
+
+  function entryHTML(entry) {
+    const ids = JJ.Journal.mentionsOf(entry);
+    const meta = entry.edited ? ` · edited ${esc(when(entry.edited))}` : '';
+    const mentions = ids.length ? `
+      <div class="entry-mentions">
+        <span class="muted small">Linked:</span>
+        ${ids.map(id => `<span class="mention-chip"><button data-go="${id}">${esc(JJ.byId[id].name)}</button><button class="unlink" data-act="unlink" data-id="${id}" aria-label="Unlink ${esc(JJ.byId[id].name)}" title="Not about this move? Unlink it">×</button></span>`).join('')}
+      </div>` : '';
+    return `
+      <article class="journal-entry" data-entry="${esc(entry.id)}">
+        <header>
+          <time datetime="${new Date(entry.created).toISOString()}">${esc(when(entry.created))}</time>
+          <span class="muted small">${meta}</span>
+        </header>
+        <div class="entry-body">
+          <p class="note-text">${linkify(entry)}</p>
+          ${mentions}
+          <div class="note-actions">
+            <button class="link-btn" data-act="edit">Edit</button>
+            <button class="link-btn danger" data-act="delete">Delete</button>
+          </div>
+        </div>
+      </article>`;
+  }
 
   function noteHTML(note) {
     const meta = note.imported ? ' · moved from your old notes'

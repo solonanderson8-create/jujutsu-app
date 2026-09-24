@@ -455,6 +455,34 @@
     'cross-collar-mount': 'mt-subs', 'guillotine-guard': 'cg-subs',
   };
 
+  // ---------------------------------------------------------------------------
+  // NICKNAMES — extra ways people write a move or position, so the training
+  // journal can spot them. The full name (and any part in brackets, like
+  // "Upa" in "Trap & Roll (Upa)") is spotted automatically; add slang here.
+  // ---------------------------------------------------------------------------
+  const aliases = {
+    'rnc': ['RNC', 'rear naked', 'rear-naked'],
+    'triangle': ['triangle'],
+    'hip-bump-sweep': ['hip bump', 'bump sweep'],
+    'upa': ['trap and roll', 'bridge and roll'],
+    'de-la-riva': ['DLR', 'de la riva'],
+    'single-leg-x': ['SLX', 'ashi garami', 'ashi'],
+    'x-guard': ['x guard'],
+    'seatbelt': ['seat belt'],
+    'bow-arrow': ['bow and arrow'],
+    'kneebar': ['knee bar'],
+    'knee-on-belly': ['KOB', 'knee on stomach'],
+    'granby': ['granby'],
+    'toreando': ['torreando', 'bullfighter pass'],
+    'flower-sweep': ['pendulum sweep', 'flower sweep'],
+    'butterfly-sweep': ['hook sweep'],
+    'technical-standup': ['technical stand up', 'technical standup'],
+    'underhook-dogfight': ['dogfight', 'dog fight'],
+    'elbow-knee': ['elbow knee', 'elbow escape'],
+    'shrimp-reguard': ['shrimp', 'shrimping'],
+    'body-triangle': ['body triangle', 'body lock'],
+  };
+
   // Build a lookup table: id -> object (and tag each object with its type).
   const byId = {};
   positions.forEach(p => { p.type = 'position'; byId[p.id] = p; });
@@ -481,6 +509,7 @@
   window.JJ.placeOf = placeOf;
   window.JJ.positionOf = positionOf;
   window.JJ.renamed = renamed;
+  window.JJ.aliases = aliases;
   window.JJ.renamedPlace = renamedPlace;
   window.JJ.data = { positions, categories, techniques, flows };
   window.JJ.byId = byId;

@@ -36,6 +36,7 @@
     else place = undefined;
     Graph.select({ id, place });
     Panel.open(id, place);
+    journalBtn.classList.remove('active');
     if (fly) Graph.focusNode(id, place);
     const many = n.type === 'technique' && n.places.length > 1;
     history.replaceState(null, '', '#' + id + (many ? '@' + place : ''));
@@ -44,6 +45,7 @@
   function clear() {
     Graph.select(null);
     Panel.close();
+    journalBtn.classList.remove('active');
     history.replaceState(null, '', location.pathname + location.search);
   }
 
@@ -51,6 +53,19 @@
   Graph.onBackground = () => { if (Graph.selected) clear(); };
   Panel.onNavigate = (id, place) => select(id, place);
   Panel.onClose = clear;
+
+  // ---- Training journal -------------------------------------------------------
+  const journalBtn = $('#journal-btn');
+  function openJournal(entryId) {
+    Graph.select(null);
+    Panel.openJournal(entryId);
+    journalBtn.classList.add('active');           // "you are here" colour while it's open
+    history.replaceState(null, '', '#journal');
+  }
+  Panel.onJournal = openJournal;
+  journalBtn.addEventListener('click', () => {
+    if (Panel.mode === 'journal') clear(); else openJournal();
+  });
 
   // ---- Level "gearbox" --------------------------------------------------------
   const levelBtns = document.querySelectorAll('.level-btn');
@@ -161,7 +176,8 @@
   addEventListener('resize', () => Graph.apply());
 
   const [startId, startPlace] = decodeURIComponent(location.hash.slice(1)).split('@');
-  if (JJ.byId[JJ.renamed[startId] || startId]) select(startId, startPlace);
+  if (startId === 'journal') openJournal();
+  else if (JJ.byId[JJ.renamed[startId] || startId]) select(startId, startPlace);
 
   // Offline support. Only works when served from a website (not a double-clicked file).
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

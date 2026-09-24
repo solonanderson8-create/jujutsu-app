@@ -39,6 +39,10 @@ techniques.forEach(t => {
     });
   });
 });
+Object.entries(window.JJ.aliases).forEach(([id, list]) => {
+  if (!byId[id]) problems.push(`nickname list points at missing "${id}"`);
+  if (!Array.isArray(list) || !list.length) problems.push(`nickname list for "${id}" is empty`);
+});
 Object.entries(window.JJ.renamed).forEach(([old, now]) => {
   if (byId[old]) problems.push(`old id "${old}" still exists (should be merged into "${now}")`);
   if (!byId[now]) problems.push(`renamed id "${old}" points at missing "${now}"`);

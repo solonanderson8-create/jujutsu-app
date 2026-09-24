@@ -17,7 +17,8 @@ Main uses: **studying at home** and **logging after class** (not quick gym looku
 - **Technique page**: on iPad it takes about **half the screen** (web still visible). Order: description first, then works/fails/related, then video. Text size stays as is.
 - **Notes, two kinds**:
   1. *Move notes* — per move, in the Notes tab (built).
-  2. *Training journal* — opened from a **Journal button on the web**, shown in the same half-screen page. Entries are **free writing + date**. Move names are **auto-spotted** in the text and become links (no AI). A move's Notes tab shows "My notes" and then **"From my training journal"** snippets that open the full entry.
+  2. *Training journal* (built, `js/journal.js`) — opened from a **Journal button on the web**, shown in the same half-screen page. Entries are **free writing + date**, oldest first. Move and position names are **auto-spotted** (longest name first, whole words, no AI) and become links; a wrong match can be unlinked per entry. A move's Notes tab shows "My notes" then **"From my training journal"** snippets that open the full entry.
+     - Slang/nicknames for spotting live in `aliases` in `js/data.js` (e.g. `rnc: ['RNC', 'rear naked']`). Full names and bracketed parts are spotted automatically.
 - **Same move in several positions** (Armbar, Kimura, Arm Triangle, Cross Collar Choke): **one move, many places** — one set of notes, the page lists every position it's done from.
 - **First visit**: short, skippable **guided tour** (zoom levels → tap a move → Notes tab → Journal), replayable from a help button.
 - **Search** covers everything: move/position names, move notes and journal text, grouped by type.
