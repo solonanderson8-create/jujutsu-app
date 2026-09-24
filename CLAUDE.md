@@ -11,6 +11,17 @@ The owner edits content by asking Claude, so most requests are **data edits in `
 - **Technique page**: the panel that opens when you tap a move on the web (`#panel`, built by `js/panel.js`).
 - **Position page**: the same panel when you tap a position bubble (working name, not yet confirmed by the owner).
 
+## UX baseline (decided with the owner, Sep 2026)
+Main uses: **studying at home** and **logging after class** (not quick gym lookups).
+- **Opens on** the whole web, zoomed out. **Fixed map** layout (no physics, no dragging). **Floating controls** stay.
+- **Technique page**: on iPad it takes about **half the screen** (web still visible). Order: description first, then works/fails/related, then video. Text size stays as is.
+- **Notes, two kinds**:
+  1. *Move notes* — per move, in the Notes tab (built).
+  2. *Training journal* — opened from a **Journal button on the web**, shown in the same half-screen page. Entries are **free writing + date**. Move names are **auto-spotted** in the text and become links (no AI). A move's Notes tab shows "My notes" and then **"From my training journal"** snippets that open the full entry.
+- **Same move in several positions** (Armbar, Kimura, Arm Triangle, Cross Collar Choke): **one move, many places** — one set of notes, the page lists every position it's done from.
+- **First visit**: short, skippable **guided tour** (zoom levels → tap a move → Notes tab → Journal), replayable from a help button.
+- **Search** covers everything: move/position names, move notes and journal text, grouped by type.
+
 ## Colour themes (owner's Behr paint picks)
 - All colours live in the `[data-theme="…"]` blocks at the top of `styles.css`; nothing else hard-codes colour. Use roles (`--bg`, `--surface`, `--accent`, `--success`, `--fail`…).
 - **Light**: web background Sunflower Seed `#FFE3AC` · pages Rumors `#744245` · contrast Joyful Orange `#FA9335` · works arrow Trailing Vine `#5A6952` · fails arrow Plantain Chips `#D6A550`.
