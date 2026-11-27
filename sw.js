@@ -5,7 +5,7 @@
  * When the network is down, it serves the copy from the backpack instead.
  * "Network first" means you always get the newest version when online.
  */
-const CACHE = 'jj-flow-v9';
+const CACHE = 'jj-flow-v10';
 const FILES = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest',
   'js/data.js', 'js/belts.js', 'js/graph.js', 'js/journal.js', 'js/panel.js', 'js/cards.js', 'js/study.js', 'js/app.js',
@@ -28,7 +28,9 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;  // e.g. YouTube: leave alone
   e.respondWith(
-    fetch(e.request)
+    // 'no-cache' = always ask the server "has this changed?" before reusing a
+    // saved copy, so a new page never runs with old parts.
+    fetch(e.request, { cache: 'no-cache' })
       .then(res => {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(e.request, copy));

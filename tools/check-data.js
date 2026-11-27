@@ -58,6 +58,18 @@ flows.forEach(f => {
   if (!byId[f.from] || !byId[f.to]) problems.push(`flow ${f.from} -> ${f.to} has a missing end`);
 });
 
+// Version tags: index.html's ?v= numbers must all match sw.js's CACHE version.
+{
+  const fs = require('fs'), path = require('path');
+  const swVer = (fs.readFileSync(path.join(__dirname, '../sw.js'), 'utf8').match(/jj-flow-v(\d+)/) || [])[1];
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const local = [...html.matchAll(/(?:href|src)="((?:styles\.css|js\/[\w-]+\.js)[^"]*)"/g)].map(m => m[1]);
+  local.forEach(src => {
+    const v = (src.match(/\?v=(\d+)$/) || [])[1];
+    if (v !== swVer) problems.push(`index.html loads "${src}" but sw.js is version ${swVer} (run: node tools/bump-version.js)`);
+  });
+}
+
 if (problems.length) {
   console.error(problems.length + ' problem(s):\n  ' + problems.join('\n  '));
   process.exit(1);

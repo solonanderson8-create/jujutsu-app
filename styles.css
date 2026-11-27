@@ -220,37 +220,37 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .icon-btn:hover { color: var(--accent); }
 [data-theme="light"] .icon-sun, [data-theme="dark"] .icon-moon { display: none; }
-.filters { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
 .segmented {
   display: flex; padding: 3px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
 }
-.segmented button, .levels button {
+.segmented button {
   display: inline-flex; align-items: center; min-height: 36px;
   padding: 6px 12px; background: none; border: 0; border-radius: 9px; color: var(--muted);
 }
 /* "You are here" = the contrast colour */
-.segmented button.active, .levels button.active { background: var(--accent); color: var(--on-accent); font-weight: 700; }
-.levels button.active .pip { background: var(--on-accent); border-color: var(--on-accent); }
+.segmented button.active { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.segmented button:hover { color: var(--text); }
+.segmented button.active:hover { color: var(--on-accent); }
 
-.controls {
-  position: fixed; left: 12px; bottom: 12px;
-  display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;
-  padding-bottom: env(safe-area-inset-bottom);
+/* Filter button + its dropdown menu */
+.filter-wrap { position: relative; }
+.icon-filter { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+#filters-toggle { position: relative; }
+.filter-count {
+  position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px;
+  border-radius: 10px; background: var(--on-accent); color: var(--accent);
+  font-size: 12px; font-weight: 700; line-height: 20px; text-align: center;
 }
-.levels {
-  display: flex; flex-direction: column; padding: 4px;
+.menu {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 25; width: max-content; max-width: calc(100vw - 24px);
+  display: flex; flex-direction: column; gap: 12px; padding: 14px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: 0 12px 32px var(--shadow);
 }
-.levels button { display: flex; align-items: center; gap: 8px; text-align: left; }
-.pip { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--muted); }
-.zoom {
-  display: flex; flex-direction: column; overflow: hidden;
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-}
-.zoom button { width: 40px; height: 40px; background: none; border: 0; font-size: 20px; }
-.zoom button + button { border-top: 1px solid var(--border); }
-.zoom button:hover, .levels button:hover, .segmented button:hover { color: var(--text); }
+.menu-label { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+.menu .segmented { background: var(--field); }
+.menu-reset { align-self: flex-start; }
 
 .legend {
   position: fixed; right: 12px; bottom: 12px; padding: 8px 14px;
@@ -455,12 +455,8 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 @media (max-width: 719px) {
   .icon-btn.with-label { width: 42px; padding: 0; }
   .icon-btn.with-label .btn-label { display: none; }
-  .search { max-width: none; }
-  .levels button { padding: 5px 10px; font-size: 14px; }
-  .filters { width: 100%; justify-content: space-between; gap: 6px; flex-wrap: nowrap; }
-  .segmented { flex: 1; }
-  .segmented button { flex: 1; justify-content: center; padding: 6px 4px; font-size: 14px; }
-  .filter-btn .dot { margin-right: 4px; }
+  .search { flex-basis: 100%; max-width: none; }    /* search gets its own row; buttons sit below */
+  .topbar { gap: 8px; }
 }
 
 /* ---------- Phones + portrait tablets: panel becomes a bottom sheet ----------
@@ -485,7 +481,6 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
   .panel.open { box-shadow: 0 -12px 40px var(--shadow); }
   .panel { padding-top: 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
   .panel-close { top: 18px; }
-  .panel.open ~ .controls { display: none; }
   .hint { top: auto; bottom: 170px; }
 }
 
@@ -557,7 +552,7 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 /* ---------- Flashcards: full-screen study mode ---------- */
 .icon-cards { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
 .locked-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-body.studying .topbar, body.studying .controls, body.studying .legend { visibility: hidden; }
+body.studying .topbar, body.studying .legend { visibility: hidden; }
 
 .study {
   position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column;
