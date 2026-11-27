@@ -17,7 +17,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const R = { pos: 190, cat: 28, tech: 13, catRing: 340 };  // sizes in world units
   const LOD = { cat: [0.3, 0.45], tech: [0.95, 1.25] };     // zoom where layers fade in
-  const K_MIN = 0.04, K_MAX = 6;
+  const K_MIN = 0.02, K_MAX = 6;   // K_MIN must let the whole web fit a phone screen
   const LINK_KINDS = ['success', 'fail', 'related'];
   const ARROW_KINDS = ['flow', 'success', 'fail', 'related'];  // colours come from the theme (styles.css)
 
@@ -72,7 +72,7 @@
     //    neighbouring rings don't overlap (like plates around a table).
     positions.forEach(p => {
       const n = p.cats.length;
-      p.cats.forEach(c => { c.ring = Math.max(110, c.spots.length * 28); });
+      p.cats.forEach(c => { c.ring = Math.max(110, c.spots.length * 20); });
       const biggest = Math.max(110, ...p.cats.map(c => c.ring));
       p.catRing = n < 2 ? R.catRing : Math.max(R.catRing, (2 * biggest + 70) / (2 * Math.sin(Math.PI / n)));
       p.r = p.catRing + biggest + 70;  // radius of the dashed "zone" circle
@@ -448,7 +448,9 @@
       x1 = Math.max(x1, p.x + p.r); y1 = Math.max(y1, p.y + p.r);
     });
     const s = anchor().s;
-    const k = Math.min(s.w / (x1 - x0), s.h / (y1 - y0)) * 0.95;
+    // Leave room for the names: they stay the same size on screen, so they
+    // can hang past the edge of the outermost bubbles.
+    const k = Math.min((s.w - 60) / (x1 - x0), (s.h - 40) / (y1 - y0)) * 0.97;
     this.flyTo((x0 + x1) / 2, (y0 + y1) / 2, Math.min(k, LOD.cat[0] - 0.02), dur);
   };
 
