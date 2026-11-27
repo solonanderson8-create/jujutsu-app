@@ -13,7 +13,7 @@ The owner edits content by asking Claude, so most requests are **data edits in `
 
 ## UX baseline (decided with the owner, Sep 2026)
 Main uses: **studying at home** and **logging after class** (not quick gym lookups).
-- **Opens on** the whole web, zoomed out. **Fixed map** layout (no physics, no dragging). **Floating controls** stay.
+- **Opens on** the whole web, zoomed out. **Fixed map** layout (no physics, no dragging). Top bar only: search, **one Filter dropdown** (top/bottom + gi/no-gi), Journal, Flashcards, belt, theme. The owner removed the zoom buttons and the Positions/Categories/Moves slider (Nov 2026): zoom is pinch/scroll and tapping bubbles.
 - **Technique page**: on iPad it takes about **half the screen** (web still visible). Order: description first, then works/fails/related, then video. Text size stays as is.
 - **Notes, two kinds**:
   1. *Move notes* — per move, in the Notes tab (built).
@@ -51,6 +51,7 @@ Main uses: **studying at home** and **logging after class** (not quick gym looku
 
 ## App
 - Plain HTML/CSS/JS with no build step, loaded as classic scripts that share `window.JJ`.
-- `sw.js` caches files for offline use. If you add a new file the app loads, add it to `FILES` in `sw.js` and bump `CACHE`.
+- `sw.js` caches files for offline use. If you add a new file the app loads, add it to `FILES` in `sw.js`.
+- **Every release: run `node tools/bump-version.js`** — it bumps `CACHE` in `sw.js` and the `?v=N` tags on every local CSS/JS file in `index.html` together, so a device never runs a new page with old cached parts (that caused an iPad bug once). `check-data.js` fails if the tags and `CACHE` disagree.
 - Bottom-sheet vs side-panel breakpoint is defined twice: `SHEET_QUERY` in `js/app.js` and the matching `@media` in `styles.css`. Keep them in sync.
 - Deploys to GitHub Pages from `main` via `.github/workflows/pages.yml`.

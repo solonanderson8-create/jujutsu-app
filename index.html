@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
   <!-- The map itself. Everything is drawn into this SVG by js/graph.js -->
@@ -39,11 +39,37 @@
     <div class="panel-body"></div>
   </aside>
 
-  <!-- Top bar: search, journal, theme, filters -->
+  <!-- Top bar: search, journal, flashcards, belt, theme, filters -->
   <header class="topbar">
     <div class="search">
       <input id="search" type="search" placeholder="Search moves…  ( / )" autocomplete="off" aria-label="Search moves">
       <ul id="search-results" hidden></ul>
+    </div>
+    <!-- Filters: one button that opens a small dropdown -->
+    <div class="filter-wrap">
+      <button id="filters-toggle" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-controls="filter-menu" aria-label="Filters">
+        <svg class="icon-filter" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
+        <span class="filter-count" hidden></span>
+      </button>
+      <div id="filter-menu" class="menu" hidden>
+        <div class="menu-group">
+          <div class="menu-label">You're on</div>
+          <div class="segmented" role="group" aria-label="Top or bottom filter">
+            <button class="filter-btn" data-key="role" data-value="all">Both</button>
+            <button class="filter-btn" data-key="role" data-value="top"><span class="dot role-top"></span>Top</button>
+            <button class="filter-btn" data-key="role" data-value="bottom"><span class="dot role-bottom"></span>Bottom</button>
+          </div>
+        </div>
+        <div class="menu-group">
+          <div class="menu-label">Style</div>
+          <div class="segmented" role="group" aria-label="Gi filter">
+            <button class="filter-btn" data-key="style" data-value="all">All</button>
+            <button class="filter-btn" data-key="style" data-value="gi">Gi</button>
+            <button class="filter-btn" data-key="style" data-value="nogi">No-Gi</button>
+          </div>
+        </div>
+        <button class="link-btn menu-reset">Reset filters</button>
+      </div>
     </div>
     <button id="journal-btn" class="icon-btn with-label" aria-label="Open training journal">
       <svg class="icon-book" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>
@@ -58,33 +84,7 @@
       <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
       <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
     </button>
-    <div class="filters">
-      <div class="segmented" role="group" aria-label="Top or bottom filter">
-        <button class="filter-btn" data-key="role" data-value="all">Both</button>
-        <button class="filter-btn" data-key="role" data-value="top"><span class="dot role-top"></span>Top</button>
-        <button class="filter-btn" data-key="role" data-value="bottom"><span class="dot role-bottom"></span>Bottom</button>
-      </div>
-      <div class="segmented" role="group" aria-label="Gi filter">
-        <button class="filter-btn" data-key="style" data-value="all">All</button>
-        <button class="filter-btn" data-key="style" data-value="gi">Gi</button>
-        <button class="filter-btn" data-key="style" data-value="nogi">No-Gi</button>
-      </div>
-    </div>
   </header>
-
-  <!-- Bottom left: zoom level "gearbox" + zoom buttons -->
-  <div class="controls">
-    <div class="levels" role="group" aria-label="Detail level">
-      <button class="level-btn" title="See all positions"><span class="pip"></span>Positions</button>
-      <button class="level-btn" title="See categories"><span class="pip"></span>Categories</button>
-      <button class="level-btn" title="See every move"><span class="pip"></span>Moves</button>
-    </div>
-    <div class="zoom">
-      <button id="zoom-in" aria-label="Zoom in">+</button>
-      <button id="zoom-out" aria-label="Zoom out">−</button>
-      <button id="zoom-fit" aria-label="Show everything">⤢</button>
-    </div>
-  </div>
 
   <!-- Bottom right: what the arrow colours mean -->
   <div id="legend" class="legend">
@@ -125,13 +125,13 @@
   </div>
 
 
-  <script src="js/data.js"></script>
-  <script src="js/belts.js"></script>
-  <script src="js/graph.js"></script>
-  <script src="js/journal.js"></script>
-  <script src="js/panel.js"></script>
-  <script src="js/cards.js"></script>
-  <script src="js/study.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/data.js?v=10"></script>
+  <script src="js/belts.js?v=10"></script>
+  <script src="js/graph.js?v=10"></script>
+  <script src="js/journal.js?v=10"></script>
+  <script src="js/panel.js?v=10"></script>
+  <script src="js/cards.js?v=10"></script>
+  <script src="js/study.js?v=10"></script>
+  <script src="js/app.js?v=10"></script>
 </body>
 </html>

@@ -152,15 +152,6 @@
     if (Panel.mode === 'journal') clear(); else openJournal();
   });
 
-  // ---- Level "gearbox" --------------------------------------------------------
-  const levelBtns = document.querySelectorAll('.level-btn');
-  Graph.onLevel = level => levelBtns.forEach((b, i) => b.classList.toggle('active', i === level));
-  levelBtns.forEach((b, i) => b.addEventListener('click', () => Graph.setLevel(i)));
-
-  $('#zoom-in').addEventListener('click', () => Graph.zoomBy(1.6));
-  $('#zoom-out').addEventListener('click', () => Graph.zoomBy(1 / 1.6));
-  $('#zoom-fit').addEventListener('click', () => Graph.fitAll());
-
   // ---- Filters: Gi / No-Gi and Top / Bottom -----------------------------------
   // Each button has data-key ("style" or "role") and data-value.
   const filterBtns = document.querySelectorAll('.filter-btn');
@@ -172,8 +163,30 @@
     });
     store.set('jj-filter-' + key, value === 'all' ? '' : value);
     if (Panel.current) Panel.open(Panel.current, Panel.place);  // refresh chip dimming
+    // The Filter button lights up and shows how many filters are on.
+    const active = ['role', 'style'].filter(k => JJ.filter[k] !== 'all').length;
+    filtersToggle.classList.toggle('active', active > 0);
+    filterCount.hidden = !active;
+    filterCount.textContent = active;
+    filtersToggle.setAttribute('aria-label', active ? `Filters (${active} on)` : 'Filters');
   }
   filterBtns.forEach(b => b.addEventListener('click', () => setFilter(b.dataset.key, b.dataset.value)));
+
+  // The dropdown that holds the filters.
+  const filtersToggle = $('#filters-toggle'), filterMenu = $('#filter-menu');
+  const filterCount = filtersToggle.querySelector('.filter-count');
+  function showFilterMenu(open) {
+    filterMenu.hidden = !open;
+    filtersToggle.setAttribute('aria-expanded', open);
+  }
+  filtersToggle.addEventListener('click', () => showFilterMenu(filterMenu.hidden));
+  filterMenu.querySelector('.menu-reset').addEventListener('click', () => {
+    setFilter('role', 'all');
+    setFilter('style', 'all');
+  });
+  document.addEventListener('pointerdown', e => {          // tap anywhere else to close it
+    if (!filterMenu.hidden && !e.target.closest('.filter-wrap')) showFilterMenu(false);
+  });
 
   // ---- Colour themes ----------------------------------------------------------
   // The palettes themselves live in styles.css ([data-theme="…"] blocks).
@@ -236,6 +249,7 @@
   });
 
   document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !filterMenu.hidden) { showFilterMenu(false); return; }
     if (e.key === 'Escape' && !dialog.hidden && Belts.chosen) { dialog.hidden = true; return; }
     if (e.key === 'Escape' && document.activeElement !== input) clear();
     if (e.key === '/' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
