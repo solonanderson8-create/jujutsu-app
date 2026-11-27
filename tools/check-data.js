@@ -39,6 +39,13 @@ techniques.forEach(t => {
     });
   });
 });
+const BELTS = ['white', 'blue', 'purple', 'brown', 'black'];
+techniques.forEach(t => { if (!(t.id in window.JJ.levels)) problems.push(`"${t.id}" has no belt level`); });
+Object.entries(window.JJ.levels).forEach(([id, lv]) => {
+  if (!byId[id] || byId[id].type !== 'technique') problems.push(`belt level for unknown move "${id}"`);
+  const m = /^(\w+) ([0-4])$/.exec(lv);
+  if (!m || !BELTS.includes(m[1])) problems.push(`"${id}" has a bad belt level "${lv}" (use e.g. 'blue 2')`);
+});
 Object.entries(window.JJ.aliases).forEach(([id, list]) => {
   if (!byId[id]) problems.push(`nickname list points at missing "${id}"`);
   if (!Array.isArray(list) || !list.length) problems.push(`nickname list for "${id}" is empty`);

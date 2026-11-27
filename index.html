@@ -49,6 +49,7 @@
       <svg class="icon-book" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg>
       <span class="btn-label">Journal</span>
     </button>
+    <button id="belt-btn" class="icon-btn with-label" aria-label="Your belt level"></button>
     <button id="theme-btn" class="icon-btn" aria-label="Switch colour theme">
       <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
       <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
@@ -91,7 +92,24 @@
       <li><span class="swatch related"></span>Related</li>
       <li><span class="dot role-top"></span>You're on top</li>
       <li><span class="dot role-bottom"></span>You're on bottom</li>
+      <li><span class="dot belt-ring"></span>Faded ring = above your belt</li>
     </ul>
+  </div>
+
+  <!-- Belt picker: shown on first visit, and from the belt button -->
+  <div id="belt-dialog" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="belt-title">
+      <h2 id="belt-title">What belt are you?</h2>
+      <p class="muted">The web shows moves up to your level. Harder moves stay faded until you're ready, so it's not overwhelming. Your coach knows best: this is just a guide.</p>
+      <div class="belt-choices" role="radiogroup" aria-label="Belt"></div>
+      <div class="stripe-row">
+        <span class="stripe-label">Stripes</span>
+        <div class="segmented stripe-choices" role="radiogroup" aria-label="Stripes"></div>
+      </div>
+      <p class="belt-preview"></p>
+      <label class="belt-off"><input type="checkbox" id="belt-off-box"> Show every move (turn belt levels off)</label>
+      <button class="btn btn-primary belt-done">Done</button>
+    </div>
   </div>
 
   <div id="hint" class="hint" hidden>
@@ -101,6 +119,7 @@
 
 
   <script src="js/data.js"></script>
+  <script src="js/belts.js"></script>
   <script src="js/graph.js"></script>
   <script src="js/journal.js"></script>
   <script src="js/panel.js"></script>

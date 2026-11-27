@@ -67,6 +67,7 @@
     onNavigate: () => {},
     onClose: () => {},
     onJournal: () => {},  // open the training journal (optionally at one entry)
+    onBelt: () => {},     // open the belt picker
     page: 0,          // 0 = main page, 1 = notes page
     drafts: {},       // unsent note text per move, kept while the app is open
   };
@@ -81,6 +82,7 @@
       if (chip) return this.onNavigate(chip.dataset.go, chip.dataset.place);
       const entry = e.target.closest('[data-journal]');
       if (entry) return this.onJournal(entry.dataset.journal);
+      if (e.target.closest('[data-belt-open]')) return this.onBelt();
       const tab = e.target.closest('[data-page]');
       if (tab) return this.showPage(+tab.dataset.page, true);
     });
@@ -102,6 +104,13 @@
     this.current = id;
     this.place = place;
     this.mode = 'item';
+
+    // Above your belt: show what it is and when it unlocks, but not the details.
+    if (n.type === 'technique' && JJ.Belts.locked(id)) {
+      this.body.innerHTML = lockedHTML(n, place);
+      this.root.classList.add('open');
+      return;
+    }
 
     const mainLabel = n.type === 'position' ? 'Position' : 'Technique';
     this.body.innerHTML = `
@@ -409,15 +418,35 @@
     const tag = n.type === 'position' ? '<span class="chip-tag">position</span>' : '';
     const dot = pl ? `dot role-${pl.role}` : 'dot';
     const off = pl && !JJ.matches(n, place ? pl : null) ? ' off' : '';
+    const locked = pl && JJ.Belts.locked(n.id);
+    const lock = locked ? JJ.Belts.beltHTML(JJ.Belts.rankOf(n.id), 'belt-mini') : '';
     const placeAttr = place ? ` data-place="${esc(place)}"` : '';
-    return `<button class="chip${off}" data-go="${n.id}"${placeAttr} style="--c:${pos.color}">
-      <span class="${dot}"></span>${esc(n.name)}${tag}${extra ? `<span class="chip-tag">${esc(extra)}</span>` : ''}</button>`;
+    return `<button class="chip${off}${locked ? ' locked' : ''}" data-go="${n.id}"${placeAttr} style="--c:${pos.color}"${locked ? ` title="${esc(JJ.Belts.label(JJ.Belts.rankOf(n.id)))} move"` : ''}>
+      <span class="${dot}"></span>${esc(n.name)}${tag}${lock}${extra ? `<span class="chip-tag">${esc(extra)}</span>` : ''}</button>`;
   }
 
   function chipList(ids, empty) {
     return ids.length
       ? `<div class="chips">${ids.map(id => chip(id)).join('')}</div>`
       : `<p class="muted">${empty}</p>`;
+  }
+
+  function lockedHTML(t, placeId) {
+    const B = JJ.Belts;
+    const pl = JJ.placeOf(t, placeId);
+    const pos = JJ.positionOf(pl);
+    const rank = B.rankOf(t.id);
+    return `
+      <div class="locked-page">
+        <div class="crumb"><button class="crumb-link" data-go="${pos.id}" style="--c:${pos.color}"><span class="dot"></span>${esc(pos.name)}</button>
+          <span class="crumb-sep">›</span> ${esc(JJ.byId[pl.category].name)}</div>
+        <h2>${esc(t.name)}</h2>
+        <div class="locked-belt">${B.beltHTML(rank, 'belt-big')}<span>${esc(B.label(rank))} move</span></div>
+        <p class="desc">This move is usually taught at <b>${esc(B.label(rank))}</b>. You're set to
+          <b>${esc(B.label(B.rank))}</b>, so its details are hidden for now so you can focus on what's at your level.</p>
+        <p class="muted">Flashcards will let you earn new stripes (coming soon). Until then you can change your belt, or turn belt levels off to see every move.</p>
+        <button class="btn btn-primary" data-belt-open>Change my belt</button>
+      </div>`;
   }
 
   const ROLE_LABEL = { top: 'You: Top', bottom: 'You: Bottom', neutral: 'Standing' };

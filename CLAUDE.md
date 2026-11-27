@@ -24,7 +24,7 @@ Main uses: **studying at home** and **logging after class** (not quick gym looku
 - **Search** covers everything: move/position names, move notes and journal text, grouped by type.
 
 ## Planned: belt levels + flashcards (decided with the owner, Nov 2026)
-- **Belt levels**: every move gets a belt + stripe (White→Black, 4 stripes each). The user **picks their belt** on first visit; **on by default**, switchable off ("show everything"). Moves above your level show **faded with a belt tag** (tap = name + "Blue belt move", details locked).
+- **Belt levels** (engine built: `js/belts.js`, ranks in `levels` in `js/data.js`, format `'blue 2'`; every move must have one — check-data enforces it): every move gets a belt + stripe (White→Black, 4 stripes each). The user **picks their belt** on first visit; **on by default**, switchable off ("show everything"). Moves above your level show **faded with a belt tag** (tap = name + "Blue belt move", details locked).
 - Claude drafts each move's level from common curricula; every assignment must be listed in one reviewable place so a coach can correct it. Gyms vary — say so.
 - Library target: ~**400 moves** through black belt, added in batches (each batch = its own PR, checked by `tools/check-data.js`). New positions needed (e.g. North-South, front headlock, scarf hold, leg entanglements).
 - **Flashcards**: **full-screen study mode**. Card types: if-it-works / if-it-fails (select all that apply, 5 options), description → name, move → position. **Spaced repetition**: missed cards return sooner; rank never drops. **Promotion**: mastering the next stripe's cards **unlocks a stripe test**; passing it earns the stripe.

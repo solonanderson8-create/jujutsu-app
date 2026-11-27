@@ -209,7 +209,8 @@
     results.innerHTML = hits.length
       ? hits.map(n => {
           const pos = n.type === 'position' ? n : JJ.positionOf(n.places[0]);
-          const sub = n.type === 'position' ? 'Position' : n.places.map(pl => JJ.positionOf(pl).name).join(' · ');
+          const sub = (n.type === 'position' ? 'Position' : n.places.map(pl => JJ.positionOf(pl).name).join(' · ')) +
+            (JJ.Belts.locked(n.id) ? ' · ' + JJ.Belts.beltOf(JJ.Belts.rankOf(n.id)).name + ' belt' : '');
           return `<li><button data-id="${n.id}" style="--c:${pos.color}"><span class="dot"></span>
             <span>${n.name}</span><span class="muted small">${sub}</span></button></li>`;
         }).join('')
@@ -235,6 +236,7 @@
   });
 
   document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !dialog.hidden && Belts.chosen) { dialog.hidden = true; return; }
     if (e.key === 'Escape' && document.activeElement !== input) clear();
     if (e.key === '/' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
       e.preventDefault(); input.focus();
@@ -246,10 +248,70 @@
   if (isNarrow()) $('#legend').classList.add('collapsed');
 
   const hint = $('#hint');
-  if (!store.get('jj-hint-seen')) {
+  function showHintOnce() {
+    if (store.get('jj-hint-seen')) return;
     hint.hidden = false;
     hint.querySelector('button').addEventListener('click', () => { hint.hidden = true; store.set('jj-hint-seen', '1'); });
   }
+
+  // ---- Belt levels ------------------------------------------------------------
+  const Belts = JJ.Belts;
+  const beltBtn = $('#belt-btn');
+  const dialog = $('#belt-dialog');
+  let draft = null;                                    // the choice being made in the picker
+
+  function renderBeltBtn() {
+    beltBtn.innerHTML = Belts.on
+      ? `${Belts.beltHTML(Belts.rank)}<span class="btn-label">${Belts.beltOf(Belts.rank).name}</span>`
+      : `<span class="belt belt-all" aria-hidden="true"></span><span class="btn-label">All moves</span>`;
+    beltBtn.setAttribute('aria-label', Belts.on ? `Your belt: ${Belts.label(Belts.rank)}. Tap to change.` : 'Belt levels off. Tap to change.');
+  }
+
+  function renderPicker() {
+    const belt = Math.floor(draft.rank / 5), stripes = draft.rank % 5;
+    dialog.querySelector('.belt-choices').innerHTML = Belts.BELTS.map((b, i) => `
+      <button class="belt-choice${i === belt ? ' active' : ''}" role="radio" aria-checked="${i === belt}" data-belt="${i}">
+        ${Belts.beltHTML(i * 5 + (i === belt ? stripes : 0), 'belt-big')}<span>${b.name}</span></button>`).join('');
+    dialog.querySelector('.stripe-choices').innerHTML = [0, 1, 2, 3, 4].map(n => `
+      <button class="${n === stripes ? 'active' : ''}" role="radio" aria-checked="${n === stripes}" data-stripes="${n}">${n}</button>`).join('');
+    dialog.querySelector('#belt-off-box').checked = !draft.on;
+    const total = JJ.data.techniques.length;
+    const open = Belts.countUpTo(draft.rank);
+    dialog.querySelector('.belt-preview').textContent = !draft.on
+      ? `Belt levels off: all ${total} moves are open.`
+      : open === total
+        ? `${Belts.label(draft.rank)}: every move in the app is open to you.`
+        : `${Belts.label(draft.rank)}: you'll see ${open} of ${total} moves; the other ${total - open} stay faded until you're ready.`;
+    dialog.classList.toggle('all-on', !draft.on);
+  }
+
+  function openBeltPicker() {
+    draft = { on: Belts.on, rank: Belts.rank };
+    renderPicker();
+    dialog.hidden = false;
+    dialog.querySelector('.belt-done').focus();
+  }
+
+  function applyBelt() {
+    Belts.save({ on: draft.on, rank: draft.rank });
+    dialog.hidden = true;
+    renderBeltBtn();
+    Graph.refreshBelt();
+    if (Panel.current) Panel.open(Panel.current, Panel.place);  // a locked page may now be open, or vice versa
+    showHintOnce();
+  }
+
+  dialog.addEventListener('click', e => {
+    const b = e.target.closest('[data-belt]');
+    if (b) { draft.rank = +b.dataset.belt * 5 + draft.rank % 5; draft.on = true; return renderPicker(); }
+    const s = e.target.closest('[data-stripes]');
+    if (s) { draft.rank = Math.floor(draft.rank / 5) * 5 + +s.dataset.stripes; draft.on = true; return renderPicker(); }
+    if (e.target.closest('.belt-done')) return applyBelt();
+    if (e.target === dialog && Belts.chosen) dialog.hidden = true;   // tap outside to cancel (not on first visit)
+  });
+  dialog.querySelector('#belt-off-box').addEventListener('change', e => { draft.on = !e.target.checked; renderPicker(); });
+  beltBtn.addEventListener('click', openBeltPicker);
+  Panel.onBelt = openBeltPicker;
 
   // ---- Start up ---------------------------------------------------------------
   Graph.init($('#graph'));
@@ -257,6 +319,8 @@
   Panel.init(panelEl);
   setFilter('style', store.get('jj-filter-style') || 'all');
   setFilter('role', store.get('jj-filter-role') || 'all');
+  renderBeltBtn();
+  if (Belts.chosen) showHintOnce(); else openBeltPicker();   // first visit: pick your belt first
 
   addEventListener('resize', () => { Graph.apply(); if (panelEl.classList.contains('open')) Sheet.apply(undefined, false); });
 
