@@ -17,7 +17,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const R = { pos: 190, cat: 28, tech: 13, catRing: 340 };  // sizes in world units
   const LOD = { cat: [0.3, 0.45], tech: [0.95, 1.25] };     // zoom where layers fade in
-  const K_MIN = 0.04, K_MAX = 6;
+  const K_MIN = 0.02, K_MAX = 6;   // K_MIN must let the whole web fit a phone screen
   const LINK_KINDS = ['success', 'fail', 'related'];
   const ARROW_KINDS = ['flow', 'success', 'fail', 'related'];  // colours come from the theme (styles.css)
 
@@ -67,23 +67,43 @@
       });
     });
 
+    // 1. How much room does each position need? Each category's moves sit on a
+    //    ring sized to fit them; the categories sit on a bigger ring, spaced so
+    //    neighbouring rings don't overlap (like plates around a table).
     positions.forEach(p => {
       const n = p.cats.length;
-      let reach = 0;
+      p.cats.forEach(c => { c.ring = Math.max(110, c.spots.length * 20); });
+      const biggest = Math.max(110, ...p.cats.map(c => c.ring));
+      p.catRing = n < 2 ? R.catRing : Math.max(R.catRing, (2 * biggest + 70) / (2 * Math.sin(Math.PI / n)));
+      p.r = p.catRing + biggest + 70;  // radius of the dashed "zone" circle
+    });
+
+    // 2. Spread the whole map out if any two positions would now overlap.
+    //    The x/y in data.js are a sketch; this scales it so everything fits.
+    if (!JJ.layoutScaled) {
+      let scale = 1;
+      positions.forEach((a, i) => positions.slice(i + 1).forEach(b => {
+        const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        scale = Math.max(scale, (a.r + b.r + 140) / d);
+      }));
+      positions.forEach(p => { p.x *= scale; p.y *= scale; });
+      JJ.layoutScaled = true;
+    }
+
+    // 3. Place categories around each position, and moves around each category.
+    positions.forEach(p => {
+      const n = p.cats.length;
       p.cats.forEach((c, i) => {
         const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
-        c.x = p.x + R.catRing * Math.cos(a);
-        c.y = p.y + R.catRing * Math.sin(a);
+        c.x = p.x + p.catRing * Math.cos(a);
+        c.y = p.y + p.catRing * Math.sin(a);
         const m = c.spots.length;
-        c.ring = Math.max(110, m * 28);
         c.spots.forEach((sp, j) => {
           const b = a + (j * 2 * Math.PI) / m + (m > 1 ? Math.PI / m : 0);
           sp.x = c.x + c.ring * Math.cos(b);
           sp.y = c.y + c.ring * Math.sin(b);
         });
-        reach = Math.max(reach, R.catRing + c.ring);
       });
-      p.r = reach + 70;  // radius of the dashed "zone" circle
     });
   }
 
@@ -428,7 +448,9 @@
       x1 = Math.max(x1, p.x + p.r); y1 = Math.max(y1, p.y + p.r);
     });
     const s = anchor().s;
-    const k = Math.min(s.w / (x1 - x0), s.h / (y1 - y0)) * 0.95;
+    // Leave room for the names: they stay the same size on screen, so they
+    // can hang past the edge of the outermost bubbles.
+    const k = Math.min((s.w - 60) / (x1 - x0), (s.h - 40) / (y1 - y0)) * 0.97;
     this.flyTo((x0 + x1) / 2, (y0 + y1) / 2, Math.min(k, LOD.cat[0] - 0.02), dur);
   };
 

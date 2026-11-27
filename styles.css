@@ -261,6 +261,13 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 .legend ul { list-style: none; margin: 6px 0 0; padding: 0; }
 .legend li { display: flex; align-items: center; gap: 8px; }
 .legend.collapsed ul { display: none; }
+/* An × in the corner closes the key, like the journal and technique pages. */
+.legend-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.legend-close {
+  width: 26px; height: 26px; flex: none; border: 0; border-radius: 50%;
+  background: var(--surface-2); font-size: 17px; line-height: 1;
+}
+.legend.collapsed .legend-close { display: none; }
 .swatch { width: 22px; height: 0; border-top: 3px solid; }
 .swatch.flow { border-color: var(--muted); }
 .swatch.success { border-color: var(--success); }

@@ -14,11 +14,14 @@
   const isNarrow = () => innerWidth < 720;
 
   // The part of the screen not covered by the panel. The camera centers here.
+  // The part of the screen the web can use: below the top bar, and not under the page.
   Graph.safeArea = () => {
+    const bar = document.querySelector('.topbar');
+    const top = bar ? Math.round(bar.getBoundingClientRect().bottom) : 0;
     const open = panelEl.classList.contains('open');
-    if (!open) return { x: 0, y: 0, w: innerWidth, h: innerHeight };
-    if (isSheet()) return { x: 0, y: 0, w: innerWidth, h: innerHeight - panelEl.offsetHeight };
-    return { x: 0, y: 0, w: innerWidth - panelEl.offsetWidth, h: innerHeight };
+    if (!open) return { x: 0, y: top, w: innerWidth, h: innerHeight - top };
+    if (isSheet()) return { x: 0, y: top, w: innerWidth, h: innerHeight - panelEl.offsetHeight - top };
+    return { x: 0, y: top, w: innerWidth - panelEl.offsetWidth, h: innerHeight - top };
   };
 
   // ---- Resizable bottom sheet (phones, portrait tablets) ------------------------
@@ -259,6 +262,7 @@
 
   // ---- Legend + first-time hint -------------------------------------------
   $('#legend-toggle').addEventListener('click', () => $('#legend').classList.toggle('collapsed'));
+  $('#legend .legend-close').addEventListener('click', () => $('#legend').classList.add('collapsed'));
   if (isNarrow()) $('#legend').classList.add('collapsed');
 
   const hint = $('#hint');

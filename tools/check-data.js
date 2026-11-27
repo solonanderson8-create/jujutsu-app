@@ -50,6 +50,23 @@ Object.entries(window.JJ.aliases).forEach(([id, list]) => {
   if (!byId[id]) problems.push(`nickname list points at missing "${id}"`);
   if (!Array.isArray(list) || !list.length) problems.push(`nickname list for "${id}" is empty`);
 });
+// Every name the journal spots (full name, bracket parts, nicknames) must belong
+// to one move or position only, or a journal word would link to the wrong one.
+{
+  const norm = s => s.toLowerCase().replace(/&/g, 'and').replace(/[\s-]+/g, ' ').trim();
+  const owner = {};
+  const claim = (word, id) => {
+    const k = norm(word);
+    if (owner[k] && owner[k] !== id) problems.push(`"${word}" is a name for both "${owner[k]}" and "${id}" (the journal can't tell them apart)`);
+    owner[k] = id;
+  };
+  [...positions, ...techniques].forEach(n => {
+    claim(n.name, n.id);
+    const m = n.name.match(/^(.*?)\s*\((.*)\)\s*$/);
+    if (m) { claim(m[1], n.id); claim(m[2], n.id); }
+  });
+  Object.entries(window.JJ.aliases).forEach(([id, list]) => (list || []).forEach(a => claim(a, id)));
+}
 Object.entries(window.JJ.renamed).forEach(([old, now]) => {
   if (byId[old]) problems.push(`old id "${old}" still exists (should be merged into "${now}")`);
   if (!byId[now]) problems.push(`renamed id "${old}" points at missing "${now}"`);
