@@ -342,6 +342,25 @@
   $('#cards-btn').addEventListener('click', () => Study.open());
   Panel.onCards = () => Study.open();
 
+  // ---- Accounts + sync --------------------------------------------------------------
+  // When another device's changes arrive, redraw what's on screen. If you're
+  // typing in the page right now, wait until you finish so nothing jumps.
+  const Sync = JJ.Sync;
+  let redrawLater = false;
+  function redrawAfterSync() {
+    const a = document.activeElement;
+    if (a && panelEl.contains(a) && a.matches('textarea, input')) { redrawLater = true; return; }
+    redrawLater = false;
+    Belts.reload();
+    JJ.Cards.reload();
+    renderBeltBtn();
+    Graph.refreshBelt();
+    if (Panel.mode === 'journal') Panel.renderJournal();
+    else if (Panel.current) Panel.open(Panel.current, Panel.place);
+  }
+  Sync.onApplied = redrawAfterSync;
+  panelEl.addEventListener('focusout', () => setTimeout(() => { if (redrawLater) redrawAfterSync(); }, 0));
+
   // ---- Start up ---------------------------------------------------------------
   Graph.init($('#graph'));
   applyTheme(document.documentElement.dataset.theme, false);
@@ -349,6 +368,7 @@
   setFilter('style', store.get('jj-filter-style') || 'all');
   setFilter('role', store.get('jj-filter-role') || 'all');
   renderBeltBtn();
+  Sync.start();
   if (Belts.chosen) showHintOnce(); else openBeltPicker();   // first visit: pick your belt first
 
   addEventListener('resize', () => { Graph.apply(); if (panelEl.classList.contains('open')) Sheet.apply(undefined, false); });

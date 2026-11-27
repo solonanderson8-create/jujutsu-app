@@ -51,6 +51,13 @@ Main uses: **studying at home** and **logging after class** (not quick gym looku
 - Don't invent video URLs. Videos are pasted by users for now.
 - After any data edit, run `node tools/check-data.js`. It must print `OK`.
 
+## Accounts + sync (built Nov 2026, Supabase)
+- Optional. Off until `js/config.js` has the project URL + public (anon/publishable) key; then a person button appears in the top bar. Setup steps for the owner: `supabase/SETUP.md`. **Never** put the service_role/secret key anywhere.
+- Database: `supabase/schema.sql` (one `records` table, row-level security so people only see their own rows; `delete_my_account()`). `supabase/security-test.sql` must print all PASS — re-run it after any schema change.
+- `js/sync.js`: email **6-digit code** sign-in (not magic links: on iPhone a link opens Safari, not the home-screen app), and sync. Each note / journal entry / video / flashcard / belt is its own record; local storage stays the source of truth (offline-first). Same record changed on two devices → newest wins (cards: latest study; belt: higher rank). A different person signing in on a device clears the previous person's data off it.
+- Any new kind of personal data must be added to `readLocal`/`applyLocal` in `sync.js` and must call `JJ.Sync.changed()` when saved, or it won't sync.
+- `js/account.js` is the account card; `privacy.html` is the privacy page (keep it honest and dated if what's stored changes).
+
 ## App
 - Plain HTML/CSS/JS with no build step, loaded as classic scripts that share `window.JJ`.
 - `sw.js` caches files for offline use. If you add a new file the app loads, add it to `FILES` in `sw.js`.

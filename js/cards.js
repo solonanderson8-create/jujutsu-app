@@ -117,7 +117,10 @@
   // ---------------------------------------------------------------------------
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
   let memory = load();
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(memory)); } catch (e) {} };
+  const save = () => {
+    try { localStorage.setItem(KEY, JSON.stringify(memory)); } catch (e) {}
+    if (JJ.Sync) JJ.Sync.changed();
+  };
   const stateOf = id => memory[id] || { box: 0, due: 0, right: 0, wrong: 0 };
 
   function record(card, correct) {
@@ -210,5 +213,6 @@
     allCards, options, isCorrect, record, stateOf, progress, buildSession, buildTest, promote,
     PASS, MASTERED,
     reset() { memory = {}; save(); },   // for testing
+    reload() { memory = load(); cache = null; },   // after sync brings in changes from another device
   };
 })();
