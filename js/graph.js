@@ -67,23 +67,43 @@
       });
     });
 
+    // 1. How much room does each position need? Each category's moves sit on a
+    //    ring sized to fit them; the categories sit on a bigger ring, spaced so
+    //    neighbouring rings don't overlap (like plates around a table).
     positions.forEach(p => {
       const n = p.cats.length;
-      let reach = 0;
+      p.cats.forEach(c => { c.ring = Math.max(110, c.spots.length * 28); });
+      const biggest = Math.max(110, ...p.cats.map(c => c.ring));
+      p.catRing = n < 2 ? R.catRing : Math.max(R.catRing, (2 * biggest + 70) / (2 * Math.sin(Math.PI / n)));
+      p.r = p.catRing + biggest + 70;  // radius of the dashed "zone" circle
+    });
+
+    // 2. Spread the whole map out if any two positions would now overlap.
+    //    The x/y in data.js are a sketch; this scales it so everything fits.
+    if (!JJ.layoutScaled) {
+      let scale = 1;
+      positions.forEach((a, i) => positions.slice(i + 1).forEach(b => {
+        const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        scale = Math.max(scale, (a.r + b.r + 140) / d);
+      }));
+      positions.forEach(p => { p.x *= scale; p.y *= scale; });
+      JJ.layoutScaled = true;
+    }
+
+    // 3. Place categories around each position, and moves around each category.
+    positions.forEach(p => {
+      const n = p.cats.length;
       p.cats.forEach((c, i) => {
         const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
-        c.x = p.x + R.catRing * Math.cos(a);
-        c.y = p.y + R.catRing * Math.sin(a);
+        c.x = p.x + p.catRing * Math.cos(a);
+        c.y = p.y + p.catRing * Math.sin(a);
         const m = c.spots.length;
-        c.ring = Math.max(110, m * 28);
         c.spots.forEach((sp, j) => {
           const b = a + (j * 2 * Math.PI) / m + (m > 1 ? Math.PI / m : 0);
           sp.x = c.x + c.ring * Math.cos(b);
           sp.y = c.y + c.ring * Math.sin(b);
         });
-        reach = Math.max(reach, R.catRing + c.ring);
       });
-      p.r = reach + 70;  // radius of the dashed "zone" circle
     });
   }
 

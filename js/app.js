@@ -259,6 +259,7 @@
 
   // ---- Legend + first-time hint -------------------------------------------
   $('#legend-toggle').addEventListener('click', () => $('#legend').classList.toggle('collapsed'));
+  $('#legend .legend-close').addEventListener('click', () => $('#legend').classList.add('collapsed'));
   if (isNarrow()) $('#legend').classList.add('collapsed');
 
   const hint = $('#hint');

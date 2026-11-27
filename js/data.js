@@ -40,6 +40,12 @@
       blurb: 'You are behind them with your hooks in or a body triangle. The most dominant position in BJJ, because they can\'t see your attacks coming.' },
     { id: 'mount', name: 'Mount', x: 700, y: 4100, color: '#e76f51',
       blurb: 'Top player sits on bottom player\'s torso with knees on the mat. One of the strongest positions: gravity works for the top player.' },
+    { id: 'front-headlock', name: 'Front Headlock', x: -1350, y: 250, color: '#9a8c98',
+      blurb: 'Top player is in front of a bent-over or turtled opponent, controlling their head and an arm. A crossroads for chokes and go-behinds, huge in no-gi and wrestling.' },
+    { id: 'north-south', name: 'North-South', x: -700, y: 5350, color: '#84a59d',
+      blurb: 'Top player lies chest to chest but facing the opposite way, like two people lying head to toe. Heavy, and great for chokes and kimuras.' },
+    { id: 'scarf-hold', name: 'Scarf Hold', x: 700, y: 5350, color: '#cdb4db',
+      blurb: 'Top player sits beside the bottom player, hugging their head and trapping an arm, like a seatbelt across the chest. A judo pin (kesa gatame): very heavy, but it leaves your back exposed.' },
   ];
 
   // ---------------------------------------------------------------------------
@@ -71,6 +77,15 @@
     { from: 'turtle', to: 'back-control', label: 'take the back' },
     { from: 'turtle', to: 'standing', label: 'stand up' },
     { from: 'back-control', to: 'half-guard', label: 'escape' },
+    { from: 'standing', to: 'front-headlock', label: 'snap down' },
+    { from: 'takedowns', to: 'front-headlock', label: 'sprawl' },
+    { from: 'front-headlock', to: 'back-control', label: 'go-behind' },
+    { from: 'front-headlock', to: 'turtle', label: 'they turtle' },
+    { from: 'side-control', to: 'north-south', label: 'walk around' },
+    { from: 'north-south', to: 'half-guard', label: 'escape' },
+    { from: 'side-control', to: 'scarf-hold', label: 'switch hips' },
+    { from: 'scarf-hold', to: 'mount', label: 'transition' },
+    { from: 'scarf-hold', to: 'back-control', label: 'escape' },
   ];
 
   // ---------------------------------------------------------------------------
@@ -117,6 +132,17 @@
     { id: 'mt-subs', name: 'Submissions', position: 'mount' },
     { id: 'mt-trans', name: 'Transitions', position: 'mount' },
     { id: 'mt-escapes', name: 'Escapes', position: 'mount' },
+
+    { id: 'fh-control', name: 'Control & Go-Behinds', position: 'front-headlock' },
+    { id: 'fh-subs', name: 'Submissions', position: 'front-headlock' },
+    { id: 'fh-escapes', name: 'Escapes', position: 'front-headlock' },
+
+    { id: 'ns-subs', name: 'Submissions', position: 'north-south' },
+    { id: 'ns-escapes', name: 'Escapes', position: 'north-south' },
+
+    { id: 'kesa-control', name: 'Control', position: 'scarf-hold' },
+    { id: 'kesa-subs', name: 'Submissions', position: 'scarf-hold' },
+    { id: 'kesa-escapes', name: 'Escapes', position: 'scarf-hold' },
   ];
 
   // ---------------------------------------------------------------------------
@@ -157,7 +183,7 @@
       ['osoto-gari', 'seoi-nage', 'pull-closed-guard'], [], ['scissor-sweep']),
     t('snap-down', 'Snap Down', 'st-grips', 'both', 'neutral',
       'From a collar tie, yank their head down sharply so their hands hit the mat. Their weight falls forward onto you.',
-      ['guillotine', 'turtle', 'ankle-pick'], ['collar-tie'], ['sprawl']),
+      ['front-headlock-control', 'guillotine', 'turtle', 'ankle-pick'], ['collar-tie'], ['sprawl']),
 
     // ---- Standing: Guard Pulls ----
     t('pull-closed-guard', 'Pull Closed Guard', 'st-pulls', 'both', 'neutral',
@@ -195,7 +221,7 @@
     // ---- Takedowns: Defense ----
     t('sprawl', 'Sprawl', 'td-defense', 'both', 'neutral',
       'Shoot your legs back and drop your hips onto their head and shoulders. You become a heavy wedge they can\'t drive through.',
-      ['guillotine', 'turtle'], ['pull-closed-guard'], ['snap-down']),
+      ['front-headlock-control', 'guillotine', 'turtle'], ['pull-closed-guard'], ['snap-down', 'whizzer']),
     t('guillotine', 'Guillotine', 'td-defense', 'both', 'neutral',
       'Wrap your arm around their neck from the front, forearm blade under the chin, and clasp your hands. Standing, pull up and push your hips forward; from guard, close your legs and arch.',
       [], ['pull-closed-guard'], []),
@@ -424,6 +450,189 @@
     t('elbow-knee', 'Elbow-Knee Escape', 'mt-escapes', 'both', 'bottom',
       'Shrimp and wedge your elbow to your knee to push their leg down, then trap that leg to get half or full guard.',
       ['half-guard', 'closed-guard'], ['upa'], ['shrimp-reguard']),
+
+    // =========================================================================
+    // BATCH 1 (Nov 2026): escapes, passing, takedowns, front headlock,
+    // North-South, scarf hold, and a first slice of blue/purple material.
+    // =========================================================================
+
+    // ---- Standing ----
+    t('wrist-control', 'Wrist Control', 'st-grips', 'both', 'neutral',
+      'Grab their wrists before they grab you. Whoever controls the hands steers the exchange, like holding the reins.',
+      ['two-on-one', 'single-leg'], ['collar-tie'], ['grip-break']),
+    t('grip-break', 'Grip Break', 'st-grips', 'gi', 'neutral',
+      'Strip their collar grip by pulling their hand toward its thumb side while pushing your body away. The thumb side is the weak spot of any grip, like the gap in a clamp.',
+      ['collar-sleeve'], ['pull-closed-guard'], ['wrist-control']),
+
+    // ---- Takedowns ----
+    t('body-lock-takedown', 'Body Lock Takedown', 'td-wrestling', 'both', 'neutral',
+      'Lock your hands around their waist, pull their hips tight to yours, then trip a leg or sit them down. Their balance is in your arms.',
+      ['side-control', 'mount'], ['single-leg'], ['double-leg', 'ouchi-gari']),
+    t('kouchi-gari', 'Kouchi Gari (Minor Inner Reap)', 'td-judo', 'both', 'neutral',
+      'Hook behind their heel from the inside and drive forward. Their foot is pinned, so they fall backward like a tripped stool.',
+      ['side-control', 'half-guard'], ['ouchi-gari', 'double-leg'], ['de-ashi-barai']),
+    t('ouchi-gari', 'Ouchi Gari (Major Inner Reap)', 'td-judo', 'both', 'neutral',
+      'Reap their leg from the inside with yours while driving them back over it, like pulling a rug while you push.',
+      ['side-control'], ['kouchi-gari', 'double-leg'], ['osoto-gari']),
+    t('de-ashi-barai', 'De Ashi Barai (Foot Sweep)', 'td-judo', 'both', 'neutral',
+      'Sweep their foot just as they step their weight onto it, like kicking a chair leg as someone sits down. Pure timing.',
+      ['side-control'], ['osoto-gari'], ['kouchi-gari']),
+    t('tomoe-nage', 'Tomoe Nage (Circle Throw)', 'td-judo', 'gi', 'neutral',
+      'Pull them forward as you sit down under them, put a foot in their hip, and launch them over your head like a catapult.',
+      ['mount'], ['pull-closed-guard'], ['seoi-nage']),
+    t('whizzer', 'Whizzer', 'td-defense', 'both', 'neutral',
+      'When they get an underhook or a leg, wrap your arm over theirs and drive your hip down into them. Your arm is a lever pressing them to the mat.',
+      ['sprawl', 'front-headlock-control'], ['guillotine'], ['sprawl']),
+
+    // ---- Front headlock ----
+    t('front-headlock-control', 'Front Headlock Control', 'fh-control', 'both', 'top',
+      'Chin strap with one hand, the other on their triceps, hips back and heavy on their head. Their head is the steering wheel.',
+      ['go-behind', 'darce', 'high-elbow-guillotine'], ['sprawl'], ['snap-down']),
+    t('go-behind', 'Go-Behind', 'fh-control', 'both', 'top',
+      'Keep the headlock, sprawl, and circle around their shoulder to their back, like walking around a table you are leaning on.',
+      ['back-control', 'turtle-seatbelt'], ['darce'], ['snap-down']),
+    t('darce', "D'Arce Choke", 'fh-subs', 'both', 'top',
+      'Thread your arm under their neck and through their armpit, lock a figure-four and sprawl your weight onto it. Their own arm closes the choke like a hinge.',
+      [], ['anaconda', 'go-behind'], ['arm-triangle']),
+    t('anaconda', 'Anaconda Choke', 'fh-subs', 'both', 'top',
+      'The same arm-in grip as the D\'Arce, but you roll them over your shoulder to tighten it, like wringing a towel with your whole body.',
+      [], ['darce', 'go-behind'], ['darce']),
+    t('high-elbow-guillotine', 'High-Elbow Guillotine', 'fh-subs', 'both', 'top',
+      'Wrap the neck, lift your choking elbow high over their back and pull your wrist into your chest. The raised elbow turns your forearm into a blade.',
+      [], ['go-behind'], ['guillotine']),
+    t('fh-escape', 'Head-Pull Escape', 'fh-escapes', 'both', 'bottom',
+      'Fight the chin strap with both hands, pull your head out to the side, and square back up to them on your feet or knees.',
+      ['standing'], ['granby', 'sit-out'], ['technical-standup']),
+
+    // ---- North-South ----
+    t('sc-to-ns', 'Walk to North-South', 'sc-trans', 'both', 'top',
+      'Keep your chest on theirs and walk your legs around their head, like the hand of a clock sweeping round.',
+      ['north-south'], ['sc-to-mount'], ['ns-choke']),
+    t('ns-choke', 'North-South Choke', 'ns-subs', 'both', 'top',
+      'Chest to chest facing their feet, wrap your arm around their neck and drop your shoulder onto it. Your lat closes on their neck like a heavy door.',
+      [], ['kimura'], ['arm-triangle']),
+    t('ns-escape', 'North-South Escape', 'ns-escapes', 'both', 'bottom',
+      'Frame on their hips, turn into them and slide a knee in front of their hips, or bridge and turn to your knees.',
+      ['half-guard', 'turtle'], ['shrimp-reguard'], ['underhook-turtle']),
+
+    // ---- Scarf hold (kesa gatame) ----
+    t('sc-to-kesa', 'Switch to Scarf Hold', 'sc-trans', 'both', 'top',
+      'Swing your hips so you sit beside them facing their head, trapping their near arm under your armpit.',
+      ['scarf-hold'], ['sc-to-mount'], ['kesa-hold']),
+    t('kesa-hold', 'Scarf Hold (Kesa Gatame)', 'kesa-control', 'both', 'top',
+      'Sit hip to ribs beside them, their near arm trapped under your armpit and your other arm round their head. Like a seatbelt across their chest.',
+      ['kesa-armlock'], ['side-control'], ['side-control']),
+    t('kesa-armlock', 'Armlock from Scarf Hold', 'kesa-subs', 'both', 'top',
+      'Lay their trapped arm across your thigh and push their wrist down. Your leg is the fulcrum that bends the elbow straight.',
+      [], ['kesa-hold'], ['armbar']),
+    t('kesa-escape-bridge', 'Bridge & Roll from Scarf Hold', 'kesa-escapes', 'both', 'bottom',
+      'Hug their waist, bridge into them and roll them over your body toward their head, like flipping a mattress.',
+      ['side-control', 'half-guard'], ['kesa-escape-back'], ['upa']),
+    t('kesa-escape-back', 'Back Take from Scarf Hold', 'kesa-escapes', 'both', 'bottom',
+      'Free your trapped arm, turn onto your knees behind them, and take their back as they lean to stop you.',
+      ['back-control'], ['kesa-escape-bridge'], ['kesa-escape-bridge']),
+
+    // ---- Side control ----
+    t('ghost-escape', 'Ghost Escape', 'sc-escapes', 'both', 'bottom',
+      'Turn away, slip your near shoulder under them and spin out to your knees, like sliding under a fence.',
+      ['turtle', 'single-leg-turtle'], ['shrimp-reguard'], ['underhook-turtle']),
+
+    // ---- Mount ----
+    t('high-mount', 'High Mount', 'mt-trans', 'both', 'top',
+      'Walk your knees up into their armpits so their elbows can\'t wedge your hips. Their arms end up high, ready to be isolated.',
+      ['armbar', 'mounted-triangle', 's-mount'], [], ['s-mount']),
+    t('gift-wrap', 'Gift Wrap', 'mt-trans', 'both', 'top',
+      'Pull one of their arms across their own neck and hold it from behind their head, like tying a ribbon. That arm is stuck and their back is open.',
+      ['back-control', 'armbar'], ['high-mount'], ['s-mount']),
+    t('mounted-triangle', 'Mounted Triangle', 'mt-subs', 'both', 'top',
+      'From high mount, trap one arm, swing your leg over their head and lock a triangle from on top.',
+      [], ['armbar'], ['triangle']),
+
+    // ---- Back control ----
+    t('back-to-mount', 'Back to Mount', 'bc-control', 'both', 'top',
+      'When they turn toward you to escape, swing your leg over and settle into mount, like getting back on a bike.',
+      ['mount'], ['seatbelt'], ['body-triangle']),
+    t('short-choke', 'Short Choke', 'bc-subs', 'both', 'top',
+      'When they hide their neck, squeeze your forearm across the front of it and drive your shoulder in. Less arm under the chin, more pressure.',
+      [], ['armbar-back', 'rnc'], ['rnc']),
+    t('body-triangle-escape', 'Body Triangle Escape', 'bc-escapes', 'both', 'bottom',
+      'Cross your foot over their bottom ankle and pry it down, or roll toward the top leg so the lock opens, like unscrewing a clamp.',
+      ['back-escape'], [], ['body-triangle']),
+
+    // ---- Knee on belly ----
+    t('kob-turn-in', 'Turn In to Single Leg', 'kob-escapes', 'both', 'bottom',
+      'Turn into their knee, grab their posted leg, and come up for a single leg.',
+      ['single-leg'], ['kob-escape'], ['single-leg-turtle']),
+
+    // ---- Half guard ----
+    t('smash-pass', 'Smash Pass', 'hg-pass', 'both', 'top',
+      'Flatten their knees to one side, sit your hips on their legs and crossface. Like folding a lawn chair flat and sitting on it.',
+      ['side-control', 'mount'], ['crossface-flatten'], ['over-under']),
+    t('backstep-pass', 'Backstep Pass', 'hg-pass', 'both', 'top',
+      'Swing your hips round to face their feet to free your trapped leg, like stepping backward out of a doorway.',
+      ['side-control'], ['knee-slice'], ['leg-drag']),
+    t('half-guard-back-take', 'Back Take from Half Guard', 'hg-sweeps', 'both', 'bottom',
+      'From the dogfight, reach round their back, come out behind them and drag them down.',
+      ['back-control'], ['old-school-sweep'], ['underhook-dogfight']),
+    t('lockdown', 'Lockdown', 'hg-sweeps', 'both', 'bottom',
+      'Triangle your legs around their trapped leg and stretch it out like a winch, so they can\'t post or pass.',
+      ['old-school-sweep', 'deep-half'], ['knee-shield'], ['deep-half']),
+    t('waiter-sweep', 'Waiter Sweep', 'hg-sweeps', 'both', 'bottom',
+      'From deep half, lift their leg with your arm like a waiter holding up a tray, and tip them over.',
+      ['side-control'], ['deep-half'], ['deep-half']),
+
+    // ---- Open guard: passing ----
+    t('stack-pass', 'Stack Pass', 'og-pass', 'both', 'top',
+      'Lift their hips and fold them onto their shoulders, then walk around. Legs can\'t work when they\'re bent over their own head.',
+      ['side-control'], ['over-under'], ['over-under']),
+    t('headquarters', 'Headquarters Position', 'og-pass', 'both', 'top',
+      'Kneel with one knee between their legs and your other foot outside, pinning their leg. The hub most passes start from.',
+      ['knee-slice', 'long-step', 'smash-pass'], ['toreando'], []),
+    t('long-step', 'Long Step Pass', 'og-pass', 'both', 'top',
+      'From headquarters, take one big step over their leg and swing your hips out past their knees.',
+      ['side-control'], ['knee-slice'], ['backstep-pass']),
+    t('x-pass', 'X-Pass', 'og-pass', 'both', 'top',
+      'Step your shin across theirs and cut diagonally past their knees in one motion, before their feet can catch you.',
+      ['side-control'], ['toreando'], ['toreando']),
+    t('body-lock-pass', 'Body Lock Pass', 'og-pass', 'both', 'top',
+      'Lock your hands around their hips and press your chest down to kill their hip movement, then step over a leg.',
+      ['side-control', 'mount'], ['knee-slice'], ['smash-pass']),
+
+    // ---- Open guard: guards and sweeps ----
+    t('collar-sleeve-guard', 'Collar & Sleeve Guard', 'og-guards', 'gi', 'bottom',
+      'Grip their collar and sleeve, one foot on their biceps and one on their hip. You push with your legs and pull with your arms to control their posture.',
+      ['tripod-sweep', 'triangle', 'omoplata'], ['spider-guard'], ['collar-sleeve']),
+    t('reverse-dlr', 'Reverse De La Riva', 'og-guards', 'both', 'bottom',
+      'Hook your leg inside their front leg from the other side, knee pointing in. It blocks the knee cut and opens back takes.',
+      ['berimbolo', 'single-leg-x'], ['de-la-riva'], ['de-la-riva']),
+    t('dlr-sweep', 'De La Riva Sweep', 'og-sweeps', 'both', 'bottom',
+      'Kick their far leg away while your De La Riva hook lifts the near one. With both legs moving at once they topple backward.',
+      ['side-control'], ['x-guard'], ['de-la-riva']),
+    t('x-guard-sweep', 'X-Guard Sweep', 'og-sweeps', 'both', 'bottom',
+      'From X-guard, straighten your legs to stretch them out, then stand up holding their leg so they fall.',
+      ['side-control'], ['single-leg-x'], ['x-guard']),
+    t('berimbolo', 'Berimbolo', 'og-sweeps', 'both', 'bottom',
+      'From De La Riva, invert under them, spin them off balance and come up behind them, like a corkscrew turning.',
+      ['back-control'], ['de-la-riva'], ['reverse-dlr']),
+
+    // ---- Open guard: leg locks ----
+    t('toe-hold', 'Toe Hold', 'og-leglocks', 'both', 'bottom',
+      'Figure-four grip on their foot and twist it inward, like turning a key in a lock.',
+      [], ['straight-ankle-lock'], ['kimura']),
+    t('calf-slicer', 'Calf Slicer', 'og-leglocks', 'both', 'bottom',
+      'Lace your shin behind their knee and pull their foot toward their butt. Your shin is a wedge forced into the knee joint.',
+      [], ['kneebar'], ['kneebar']),
+    t('inside-heel-hook', 'Inside Heel Hook', 'og-leglocks', 'nogi', 'bottom',
+      'From an inside leg entanglement, cup the heel and turn it toward their centre line. Very dangerous to the knee: apply slowly and tap early.',
+      [], ['heel-hook', 'straight-ankle-lock'], ['heel-hook']),
+
+    // ---- Closed guard ----
+    t('collar-drag', 'Collar Drag', 'cg-back', 'gi', 'bottom',
+      'Pull their collar down past your head as you sit out to the side, and slip behind them like a revolving door.',
+      ['back-control'], ['arm-drag-guard'], ['arm-drag-guard']),
+    t('loop-choke', 'Loop Choke', 'cg-subs', 'gi', 'bottom',
+      'Grip deep in their collar, slide your forearm behind their neck as they dive in, and roll to pull the loop tight like a noose.',
+      [], ['collar-drag'], ['cross-collar']),
   ];
 
   // ---------------------------------------------------------------------------
@@ -439,6 +648,10 @@
     also('kimura', 'sc-subs', 'top', [], ['americana', 'armbar'], ['americana']),
     also('cross-collar', 'mt-subs', 'top', [], ['armbar'], []),
     also('arm-triangle', 'mt-subs', 'top', [], ['side-control'], []),
+    also('kimura', 'ns-subs', 'top', [], ['ns-choke'], []),
+    also('knee-slice', 'hg-pass', 'top', ['side-control', 'mount'], ['hg-mount-pass'], ['crossface-flatten']),
+    also('americana', 'kob-subs', 'top', [], ['far-side-armbar'], []),
+    also('armbar', 'sc-subs', 'top', [], ['kimura'], []),
   ];
 
   // Moves that used to be separate copies, and the single move they became.
@@ -480,7 +693,17 @@
     'underhook-dogfight': ['dogfight', 'dog fight'],
     'elbow-knee': ['elbow knee', 'elbow escape'],
     'shrimp-reguard': ['shrimp', 'shrimping'],
-    'body-triangle': ['body triangle', 'body lock'],
+    'body-triangle': ['body triangle'],
+    'body-lock-pass': ['body lock pass'],
+    'scarf-hold': ['kesa'],
+    'north-south': ['north south', 'N/S'],
+    'front-headlock': ['front headlock', 'front head lock'],
+    'darce': ['darce', 'd\'arce', 'brabo'],
+    'high-elbow-guillotine': ['high elbow guillotine', 'high-elbow'],
+    'headquarters': ['HQ'],
+    'reverse-dlr': ['RDLR', 'reverse dlr'],
+    'inside-heel-hook': ['inside heel hook', 'inside heel'],
+    'smash-pass': ['smash pass', 'half guard smash'],
   };
 
   // ---------------------------------------------------------------------------
@@ -530,6 +753,27 @@
     'armbar-back': 'blue 0', 'back-escape': 'white 1',
     // Mount
     'ezekiel': 'white 3', 's-mount': 'white 2', 'upa': 'white 0', 'elbow-knee': 'white 0',
+
+    // ---- Batch 1 ----
+    'wrist-control': 'white 0', 'grip-break': 'white 1',
+    'body-lock-takedown': 'white 3', 'kouchi-gari': 'white 3', 'ouchi-gari': 'white 4',
+    'de-ashi-barai': 'blue 0', 'tomoe-nage': 'blue 2', 'whizzer': 'white 2',
+    'front-headlock-control': 'white 2', 'go-behind': 'white 2', 'darce': 'blue 1',
+    'anaconda': 'blue 2', 'high-elbow-guillotine': 'blue 1', 'fh-escape': 'white 3',
+    'sc-to-ns': 'white 2', 'ns-choke': 'blue 0', 'ns-escape': 'white 2',
+    'sc-to-kesa': 'white 2', 'kesa-hold': 'white 2', 'kesa-armlock': 'blue 0',
+    'kesa-escape-bridge': 'white 3', 'kesa-escape-back': 'blue 1',
+    'ghost-escape': 'blue 1', 'high-mount': 'white 2', 'gift-wrap': 'blue 1', 'mounted-triangle': 'blue 2',
+    'back-to-mount': 'white 3', 'short-choke': 'white 4', 'body-triangle-escape': 'blue 0',
+    'kob-turn-in': 'blue 0',
+    'smash-pass': 'blue 0', 'backstep-pass': 'blue 2', 'half-guard-back-take': 'blue 1',
+    'lockdown': 'blue 2', 'waiter-sweep': 'blue 3',
+    'stack-pass': 'white 3', 'headquarters': 'blue 0', 'long-step': 'blue 1', 'x-pass': 'blue 2',
+    'body-lock-pass': 'blue 1',
+    'collar-sleeve-guard': 'white 4', 'reverse-dlr': 'blue 2', 'dlr-sweep': 'blue 1',
+    'x-guard-sweep': 'blue 2', 'berimbolo': 'purple 0',
+    'toe-hold': 'blue 2', 'calf-slicer': 'blue 3', 'inside-heel-hook': 'purple 1',
+    'collar-drag': 'blue 0', 'loop-choke': 'blue 1',
   };
 
   // Build a lookup table: id -> object (and tag each object with its type).
