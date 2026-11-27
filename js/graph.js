@@ -183,6 +183,7 @@
     });
     svg.addEventListener('pointerleave', () => this.setHover(null));
 
+    this.refreshBelt();
     this.bindCamera();
     this.fitAll(0);
   };
@@ -308,6 +309,7 @@
       sp.el.classList.add('sel');
       n.spots.forEach(lit);            // the same move elsewhere lights up too
       lit(sp.cat);
+      if (JJ.Belts.locked(id)) return;   // above your belt: don't give its links away
       LINK_KINDS.forEach(kind => sp.place[kind].forEach(tid => {
         const u = JJ.byId[tid];
         const to = u.type === 'technique' ? nearestSpot(u, sp) : u;
@@ -369,6 +371,17 @@
       const label = el('text', { x: sp.x, y: sp.y + pinR, dy: '1.2em', 'text-anchor': 'middle' }, g);
       label.textContent = sp.tech.name;
     });
+  };
+
+  // Belt levels: moves above your rank are faded, with a ring in their belt's colour.
+  Graph.refreshBelt = function () {
+    const B = JJ.Belts;
+    JJ.spots.forEach(sp => {
+      sp.el.classList.toggle('locked', B.locked(sp.tech.id));
+      sp.el.style.setProperty('--belt', `var(--belt-${B.beltOf(B.rankOf(sp.tech.id)).id})`);
+    });
+    this.techLinks.forEach(({ line, a, b }) =>
+      line.classList.toggle('locked', B.locked(a.tech.id) || B.locked(b.tech.id)));
   };
 
   // Filters (Gi / No-Gi, Top / Bottom): dim techniques that don't match.

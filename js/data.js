@@ -483,6 +483,55 @@
     'body-triangle': ['body triangle', 'body lock'],
   };
 
+  // ---------------------------------------------------------------------------
+  // BELT LEVELS — the rank at which each move is usually taught.
+  // Format: 'belt stripes'  (belts: white, blue, purple, brown, black; stripes 0–4)
+  //
+  // DRAFT by Claude from common BJJ curricula. Gyms teach in different
+  // orders, so this list is meant to be checked and corrected by a coach.
+  // Every move must appear here exactly once (tools/check-data.js checks).
+  // ---------------------------------------------------------------------------
+  const levels = {
+    // Standing
+    'collar-tie': 'white 0', 'underhook-pummel': 'white 1', 'two-on-one': 'white 2',
+    'collar-sleeve': 'white 0', 'snap-down': 'white 2', 'pull-closed-guard': 'white 0',
+    'sit-to-butterfly': 'white 2',
+    // Takedowns
+    'double-leg': 'white 0', 'single-leg': 'white 1', 'ankle-pick': 'white 3',
+    'arm-drag-standing': 'white 3', 'osoto-gari': 'white 1', 'seoi-nage': 'blue 0',
+    'uchi-mata': 'blue 2', 'sprawl': 'white 0', 'guillotine': 'white 1',
+    // Closed guard
+    'scissor-sweep': 'white 0', 'hip-bump-sweep': 'white 0', 'flower-sweep': 'white 2',
+    'armbar': 'white 0', 'triangle': 'white 1', 'omoplata': 'white 3', 'kimura': 'white 0',
+    'cross-collar': 'white 1', 'arm-drag-guard': 'white 3', 'posture': 'white 0',
+    'standing-guard-break': 'white 1', 'kneeling-guard-break': 'white 2',
+    // Open guard
+    'butterfly-guard': 'white 2', 'de-la-riva': 'blue 0', 'spider-guard': 'blue 0',
+    'lasso-guard': 'blue 1', 'x-guard': 'blue 1', 'single-leg-x': 'blue 2',
+    'butterfly-sweep': 'white 3', 'tripod-sweep': 'white 4', 'straight-ankle-lock': 'white 3',
+    'heel-hook': 'purple 0', 'kneebar': 'blue 3', 'toreando': 'white 2', 'knee-slice': 'white 2',
+    'leg-drag': 'blue 1', 'over-under': 'white 4',
+    // Half guard
+    'knee-shield': 'white 3', 'underhook-dogfight': 'white 4', 'old-school-sweep': 'blue 0',
+    'deep-half': 'blue 2', 'crossface-flatten': 'white 2', 'hg-mount-pass': 'white 3',
+    // Turtle
+    'turtle-seatbelt': 'white 3', 'clock-choke': 'blue 1', 'crucifix': 'blue 3',
+    'granby': 'blue 0', 'sit-out': 'white 4', 'technical-standup': 'white 0',
+    'single-leg-turtle': 'white 4',
+    // Side control
+    'americana': 'white 0', 'arm-triangle': 'white 2', 'paper-cutter': 'blue 1',
+    'sc-to-mount': 'white 0', 'sc-to-kob': 'white 1', 'shrimp-reguard': 'white 0',
+    'underhook-turtle': 'white 1',
+    // Knee on belly
+    'far-side-armbar': 'white 3', 'kob-to-mount': 'white 1', 'baseball-bat-choke': 'blue 2',
+    'kob-escape': 'white 1',
+    // Back control
+    'seatbelt': 'white 0', 'body-triangle': 'white 4', 'rnc': 'white 0', 'bow-arrow': 'white 3',
+    'armbar-back': 'blue 0', 'back-escape': 'white 1',
+    // Mount
+    'ezekiel': 'white 3', 's-mount': 'white 2', 'upa': 'white 0', 'elbow-knee': 'white 0',
+  };
+
   // Build a lookup table: id -> object (and tag each object with its type).
   const byId = {};
   positions.forEach(p => { p.type = 'position'; byId[p.id] = p; });
@@ -510,6 +559,7 @@
   window.JJ.positionOf = positionOf;
   window.JJ.renamed = renamed;
   window.JJ.aliases = aliases;
+  window.JJ.levels = levels;
   window.JJ.renamedPlace = renamedPlace;
   window.JJ.data = { positions, categories, techniques, flows };
   window.JJ.byId = byId;

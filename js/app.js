@@ -21,6 +21,89 @@
     return { x: 0, y: 0, w: innerWidth - panelEl.offsetWidth, h: innerHeight };
   };
 
+  // ---- Resizable bottom sheet (phones, portrait tablets) ------------------------
+  // The page snaps to three stops, like a drawer with detents:
+  //   peek = just the tabs (see almost the whole web), half, full.
+  const Sheet = {
+    snap: 'half',                                  // remembered while the app is open
+    stops() {
+      const top = panelEl.getBoundingClientRect().top;
+      const head = panelEl.querySelector('.panel-tabs, .journal-head');
+      const pad = parseFloat(getComputedStyle(panelEl).paddingBottom) || 0;
+      const peek = (head ? head.getBoundingClientRect().bottom - top : 80) + 14 + pad;
+      return { peek, half: innerHeight * 0.5, full: innerHeight - 70 };
+    },
+    set(px, animate = true) {
+      if (!animate) {                               // jump straight there (the slide-up still animates)
+        panelEl.classList.add('instant');
+        requestAnimationFrame(() => requestAnimationFrame(() => panelEl.classList.remove('instant')));
+      }
+      panelEl.style.setProperty('--sheet-h', Math.round(px) + 'px');
+    },
+    apply(name = this.snap, animate = true) {
+      if (!isSheet()) { panelEl.style.removeProperty('--sheet-h'); return; }
+      this.snap = name;
+      this.set(this.stops()[name], animate);
+      if (animate) setTimeout(keepFocusInView, 280);
+    },
+  };
+
+  // If the tapped move would end up hidden behind the page, slide the web so it shows.
+  function keepFocusInView() {
+    const f = Graph.selected;
+    if (!f || !panelEl.classList.contains('open')) return;
+    const n = JJ.byId[f.id];
+    if (!n || n.type !== 'technique') return;
+    const sp = Graph.spotFor(f.id, f.place), v = Graph.view;
+    const sy = sp.y * v.k + v.y, visibleBottom = innerHeight - panelEl.offsetHeight;
+    if (sy > visibleBottom - 40 || sy < 90) Graph.flyTo(sp.x, sp.y, v.k, 300);
+  }
+
+  (function bindSheetHandle() {
+    const handle = panelEl.querySelector('.sheet-handle');
+    let startY = 0, startH = 0, lastY = 0, lastT = 0, speed = 0, moved = 0, dragging = false;
+    handle.addEventListener('pointerdown', e => {
+      if (!isSheet()) return;
+      dragging = true; moved = 0; speed = 0;
+      startY = lastY = e.clientY; lastT = performance.now();
+      startH = panelEl.offsetHeight;
+      panelEl.classList.add('dragging');            // follow the finger with no lag
+      handle.setPointerCapture(e.pointerId);
+    });
+    handle.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const now = performance.now();
+      speed = (lastY - e.clientY) / Math.max(1, now - lastT);   // px per ms, + = upward
+      lastY = e.clientY; lastT = now;
+      moved = Math.max(moved, Math.abs(e.clientY - startY));
+      const { peek, full } = Sheet.stops();
+      Sheet.set(Math.min(full, Math.max(peek * 0.5, startH + (startY - e.clientY))));
+    });
+    const release = () => {
+      if (!dragging) return;
+      dragging = false;
+      panelEl.classList.remove('dragging');
+      if (moved < 6) return Sheet.apply(nextOnTap());              // a tap
+      const h = panelEl.offsetHeight, s = Sheet.stops();
+      if (h < s.peek - 30 && speed <= 0) return clear();          // dragged right down: close
+      const order = ['peek', 'half', 'full'];
+      let best = order.reduce((a, b) => Math.abs(s[b] - h) < Math.abs(s[a] - h) ? b : a);
+      if (Math.abs(speed) > 0.6) {                                // a quick flick moves one stop on
+        const i = order.indexOf(best);
+        const cur = order.reduce((a, b) => Math.abs(s[b] - startH) < Math.abs(s[a] - startH) ? b : a);
+        if (best === cur) best = order[Math.max(0, Math.min(2, i + (speed > 0 ? 1 : -1)))];
+      }
+      Sheet.apply(best);
+    };
+    handle.addEventListener('pointerup', release);
+    handle.addEventListener('pointercancel', release);
+    handle.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); Sheet.apply(nextOnTap()); }
+    });
+    // Tapping the handle: peek → half → full → half
+    function nextOnTap() { return Sheet.snap === 'half' ? 'full' : 'half'; }
+  })();
+
   // ---- Selecting things -----------------------------------------------------
   // `place` = which spot of a move (a move can sit in several positions).
   // Left out, the app picks the spot nearest to where you're looking.
@@ -36,6 +119,7 @@
     else place = undefined;
     Graph.select({ id, place });
     Panel.open(id, place);
+    Sheet.apply(undefined, false);
     journalBtn.classList.remove('active');
     if (fly) Graph.focusNode(id, place);
     const many = n.type === 'technique' && n.places.length > 1;
@@ -59,6 +143,7 @@
   function openJournal(entryId) {
     Graph.select(null);
     Panel.openJournal(entryId);
+    Sheet.apply(undefined, false);
     journalBtn.classList.add('active');           // "you are here" colour while it's open
     history.replaceState(null, '', '#journal');
   }
@@ -124,7 +209,8 @@
     results.innerHTML = hits.length
       ? hits.map(n => {
           const pos = n.type === 'position' ? n : JJ.positionOf(n.places[0]);
-          const sub = n.type === 'position' ? 'Position' : n.places.map(pl => JJ.positionOf(pl).name).join(' · ');
+          const sub = (n.type === 'position' ? 'Position' : n.places.map(pl => JJ.positionOf(pl).name).join(' · ')) +
+            (JJ.Belts.locked(n.id) ? ' · ' + JJ.Belts.beltOf(JJ.Belts.rankOf(n.id)).name + ' belt' : '');
           return `<li><button data-id="${n.id}" style="--c:${pos.color}"><span class="dot"></span>
             <span>${n.name}</span><span class="muted small">${sub}</span></button></li>`;
         }).join('')
@@ -150,6 +236,7 @@
   });
 
   document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !dialog.hidden && Belts.chosen) { dialog.hidden = true; return; }
     if (e.key === 'Escape' && document.activeElement !== input) clear();
     if (e.key === '/' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
       e.preventDefault(); input.focus();
@@ -161,10 +248,70 @@
   if (isNarrow()) $('#legend').classList.add('collapsed');
 
   const hint = $('#hint');
-  if (!store.get('jj-hint-seen')) {
+  function showHintOnce() {
+    if (store.get('jj-hint-seen')) return;
     hint.hidden = false;
     hint.querySelector('button').addEventListener('click', () => { hint.hidden = true; store.set('jj-hint-seen', '1'); });
   }
+
+  // ---- Belt levels ------------------------------------------------------------
+  const Belts = JJ.Belts;
+  const beltBtn = $('#belt-btn');
+  const dialog = $('#belt-dialog');
+  let draft = null;                                    // the choice being made in the picker
+
+  function renderBeltBtn() {
+    beltBtn.innerHTML = Belts.on
+      ? `${Belts.beltHTML(Belts.rank)}<span class="btn-label">${Belts.beltOf(Belts.rank).name}</span>`
+      : `<span class="belt belt-all" aria-hidden="true"></span><span class="btn-label">All moves</span>`;
+    beltBtn.setAttribute('aria-label', Belts.on ? `Your belt: ${Belts.label(Belts.rank)}. Tap to change.` : 'Belt levels off. Tap to change.');
+  }
+
+  function renderPicker() {
+    const belt = Math.floor(draft.rank / 5), stripes = draft.rank % 5;
+    dialog.querySelector('.belt-choices').innerHTML = Belts.BELTS.map((b, i) => `
+      <button class="belt-choice${i === belt ? ' active' : ''}" role="radio" aria-checked="${i === belt}" data-belt="${i}">
+        ${Belts.beltHTML(i * 5 + (i === belt ? stripes : 0), 'belt-big')}<span>${b.name}</span></button>`).join('');
+    dialog.querySelector('.stripe-choices').innerHTML = [0, 1, 2, 3, 4].map(n => `
+      <button class="${n === stripes ? 'active' : ''}" role="radio" aria-checked="${n === stripes}" data-stripes="${n}">${n}</button>`).join('');
+    dialog.querySelector('#belt-off-box').checked = !draft.on;
+    const total = JJ.data.techniques.length;
+    const open = Belts.countUpTo(draft.rank);
+    dialog.querySelector('.belt-preview').textContent = !draft.on
+      ? `Belt levels off: all ${total} moves are open.`
+      : open === total
+        ? `${Belts.label(draft.rank)}: every move in the app is open to you.`
+        : `${Belts.label(draft.rank)}: you'll see ${open} of ${total} moves; the other ${total - open} stay faded until you're ready.`;
+    dialog.classList.toggle('all-on', !draft.on);
+  }
+
+  function openBeltPicker() {
+    draft = { on: Belts.on, rank: Belts.rank };
+    renderPicker();
+    dialog.hidden = false;
+    dialog.querySelector('.belt-done').focus();
+  }
+
+  function applyBelt() {
+    Belts.save({ on: draft.on, rank: draft.rank });
+    dialog.hidden = true;
+    renderBeltBtn();
+    Graph.refreshBelt();
+    if (Panel.current) Panel.open(Panel.current, Panel.place);  // a locked page may now be open, or vice versa
+    showHintOnce();
+  }
+
+  dialog.addEventListener('click', e => {
+    const b = e.target.closest('[data-belt]');
+    if (b) { draft.rank = +b.dataset.belt * 5 + draft.rank % 5; draft.on = true; return renderPicker(); }
+    const s = e.target.closest('[data-stripes]');
+    if (s) { draft.rank = Math.floor(draft.rank / 5) * 5 + +s.dataset.stripes; draft.on = true; return renderPicker(); }
+    if (e.target.closest('.belt-done')) return applyBelt();
+    if (e.target === dialog && Belts.chosen) dialog.hidden = true;   // tap outside to cancel (not on first visit)
+  });
+  dialog.querySelector('#belt-off-box').addEventListener('change', e => { draft.on = !e.target.checked; renderPicker(); });
+  beltBtn.addEventListener('click', openBeltPicker);
+  Panel.onBelt = openBeltPicker;
 
   // ---- Start up ---------------------------------------------------------------
   Graph.init($('#graph'));
@@ -172,8 +319,10 @@
   Panel.init(panelEl);
   setFilter('style', store.get('jj-filter-style') || 'all');
   setFilter('role', store.get('jj-filter-role') || 'all');
+  renderBeltBtn();
+  if (Belts.chosen) showHintOnce(); else openBeltPicker();   // first visit: pick your belt first
 
-  addEventListener('resize', () => Graph.apply());
+  addEventListener('resize', () => { Graph.apply(); if (panelEl.classList.contains('open')) Sheet.apply(undefined, false); });
 
   const [startId, startPlace] = decodeURIComponent(location.hash.slice(1)).split('@');
   if (startId === 'journal') openJournal();
