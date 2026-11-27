@@ -68,6 +68,7 @@
     onClose: () => {},
     onJournal: () => {},  // open the training journal (optionally at one entry)
     onBelt: () => {},     // open the belt picker
+    onCards: () => {},    // open flashcards
     page: 0,          // 0 = main page, 1 = notes page
     drafts: {},       // unsent note text per move, kept while the app is open
   };
@@ -83,6 +84,7 @@
       const entry = e.target.closest('[data-journal]');
       if (entry) return this.onJournal(entry.dataset.journal);
       if (e.target.closest('[data-belt-open]')) return this.onBelt();
+      if (e.target.closest('[data-cards-open]')) return this.onCards();
       const tab = e.target.closest('[data-page]');
       if (tab) return this.showPage(+tab.dataset.page, true);
     });
@@ -444,8 +446,11 @@
         <div class="locked-belt">${B.beltHTML(rank, 'belt-big')}<span>${esc(B.label(rank))} move</span></div>
         <p class="desc">This move is usually taught at <b>${esc(B.label(rank))}</b>. You're set to
           <b>${esc(B.label(B.rank))}</b>, so its details are hidden for now so you can focus on what's at your level.</p>
-        <p class="muted">Flashcards will let you earn new stripes (coming soon). Until then you can change your belt, or turn belt levels off to see every move.</p>
-        <button class="btn btn-primary" data-belt-open>Change my belt</button>
+        <p class="muted">Earn new stripes by passing stripe tests in Flashcards, or change your belt if your coach has already promoted you.</p>
+        <div class="locked-actions">
+          <button class="btn btn-primary" data-cards-open>Open flashcards</button>
+          <button class="btn" data-belt-open>Change my belt</button>
+        </div>
       </div>`;
   }
 
