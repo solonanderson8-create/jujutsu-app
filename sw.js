@@ -5,10 +5,11 @@
  * When the network is down, it serves the copy from the backpack instead.
  * "Network first" means you always get the newest version when online.
  */
-const CACHE = 'jj-flow-v12';
+const CACHE = 'jj-flow-v13';
 const FILES = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest',
-  'js/data.js', 'js/belts.js', 'js/graph.js', 'js/journal.js', 'js/panel.js', 'js/cards.js', 'js/study.js', 'js/app.js',
+  'js/config.js', 'js/data.js', 'js/belts.js', 'js/graph.js', 'js/journal.js', 'js/panel.js', 'js/cards.js', 'js/study.js',
+  'js/sync.js', 'js/account.js', 'js/app.js', 'privacy.html',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 

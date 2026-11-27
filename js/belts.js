@@ -43,7 +43,9 @@
     save(setting) {
       this.setting = setting;
       try { localStorage.setItem(KEY, JSON.stringify(setting)); } catch (e) {}
+      if (JJ.Sync) JJ.Sync.changed();
     },
+    reload() { this.setting = load(); },   // after sync brings in changes from another device
 
     // The rank a move is usually taught at.
     rankOf(id) { return parse(JJ.levels[id] || 'white 0'); },

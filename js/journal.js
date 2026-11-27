@@ -12,7 +12,10 @@
 
   const KEY = 'jj-journal';
   const get = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } };
-  const put = list => { try { list.length ? localStorage.setItem(KEY, JSON.stringify(list)) : localStorage.removeItem(KEY); } catch (e) {} };
+  const put = list => {
+    try { list.length ? localStorage.setItem(KEY, JSON.stringify(list)) : localStorage.removeItem(KEY); } catch (e) {}
+    if (JJ.Sync) JJ.Sync.changed();
+  };
 
   // ---- The spotter -----------------------------------------------------------
   // Every name a move or position can be written as, longest first.

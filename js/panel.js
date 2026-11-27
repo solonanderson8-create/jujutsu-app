@@ -13,7 +13,10 @@
 
   const store = {
     get(key) { try { return localStorage.getItem(key) || ''; } catch (e) { return ''; } },
-    set(key, val) { try { val ? localStorage.setItem(key, val) : localStorage.removeItem(key); } catch (e) {} },
+    set(key, val) {
+      try { val ? localStorage.setItem(key, val) : localStorage.removeItem(key); } catch (e) {}
+      if (JJ.Sync && /^jj-(notes-list|video):/.test(key)) JJ.Sync.changed();
+    },
   };
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

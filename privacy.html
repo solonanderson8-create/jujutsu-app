@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy · Jujutsu Flow</title>
+  <meta name="description" content="What Jujutsu Flow stores, where, and who can see it.">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <style>
+    :root { --bg: #FFE3AC; --surface: #744245; --text: #FFF4E6; --accent: #FA9335; --muted: #E9CFC2; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #445C73; --surface: #2E4D6A; --text: #F3F1EA; --accent: #FFB729; --muted: #C9D2DB; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); font: 17px/1.6 "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif; }
+    main { max-width: 720px; margin: 24px auto; padding: 24px 22px 40px; background: var(--surface); color: var(--text); border-radius: 16px; }
+    @media (max-width: 760px) { main { margin: 0; border-radius: 0; min-height: 100vh; } }
+    h1 { margin: 0 0 4px; font-size: 28px; }
+    h2 { margin: 28px 0 6px; font-size: 20px; color: var(--accent); }
+    a { color: var(--accent); }
+    .muted { color: var(--muted); font-size: 15px; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Privacy</h1>
+  <p class="muted">Jujutsu Flow · last updated 27 November 2026</p>
+
+  <p>In short: <b>you don't need an account.</b> Without one, everything stays on your device. If you sign in, a copy of your notes is kept in your account so it's the same on all your devices, and only you can see it.</p>
+
+  <h2>Without an account</h2>
+  <p>Your notes, journal, video links, flashcard progress and belt are saved in this browser on this device, and nowhere else. Clearing your browser's data deletes them.</p>
+
+  <h2>What's stored if you sign in</h2>
+  <ul>
+    <li>Your <b>email address</b> (to send you sign-in codes).</li>
+    <li>Your <b>move notes</b>, <b>training journal</b>, <b>video links</b>, <b>flashcard progress</b> and <b>belt setting</b>, with the times you changed them.</li>
+  </ul>
+  <p>Not stored: passwords (there are none, you sign in with an emailed code), payment details, your location, or your contacts. There are no ads and no tracking or analytics.</p>
+  <p>Your journal can be personal (injuries, how training felt, people you trained with). Write what you're comfortable keeping online.</p>
+
+  <h2>Where it's kept</h2>
+  <p>In a database run by <a href="https://supabase.com" target="_blank" rel="noopener">Supabase</a>, a cloud database company, on their servers. Connections are encrypted (HTTPS).</p>
+
+  <h2>Who can see it</h2>
+  <ul>
+    <li><b>You</b>, on any device where you sign in.</li>
+    <li><b>No other users.</b> The database only ever hands a signed-in person their own records. This is enforced by the database itself and tested.</li>
+    <li><b>Honestly:</b> the person who runs this app has administrator access to the database, which is needed to fix problems, so they <i>could</i> technically see stored data. They will not read your data except to fix a problem you report or if you ask them to. Supabase staff can access data only as described in their own privacy policy.</li>
+  </ul>
+
+  <h2>Other services the app uses</h2>
+  <ul>
+    <li><b>Google Fonts</b> supplies the app's font, so Google sees that your device loaded it.</li>
+    <li><b>YouTube</b> videos you add are shown with YouTube's privacy-enhanced player (youtube-nocookie.com). YouTube's own policy applies when you play one.</li>
+  </ul>
+
+  <h2>Your controls</h2>
+  <ul>
+    <li><b>Download a copy</b> of all your data at any time (Account → "Download a copy of my data"). This works without an account too.</li>
+    <li><b>Sign out</b>, and optionally remove your notes from that device (useful on a shared device).</li>
+    <li><b>Delete your account</b> (Account → "Delete my account"). This immediately deletes your account and everything synced to it from the database. Copies may remain in the database provider's backups for a short time until those expire.</li>
+  </ul>
+
+  <h2>Age</h2>
+  <p>If you're under 13, ask a parent or guardian before making an account.</p>
+
+  <h2>Questions or changes</h2>
+  <p>If this page changes, the date at the top changes too. Questions: open an issue on the app's <a href="https://github.com/solonanderson8-create/jujutsu-app/issues" target="_blank" rel="noopener">project page</a>.</p>
+
+  <p><a href="./">← Back to the app</a></p>
+</main>
+</body>
+</html>
