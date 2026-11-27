@@ -313,6 +313,17 @@
   beltBtn.addEventListener('click', openBeltPicker);
   Panel.onBelt = openBeltPicker;
 
+  // ---- Flashcards (full-screen study mode) ----------------------------------------
+  const Study = JJ.Study;
+  Study.init($('#study'));
+  Study.onRankChange = () => {           // a stripe test was passed
+    renderBeltBtn();
+    Graph.refreshBelt();
+    if (Panel.current) Panel.open(Panel.current, Panel.place);
+  };
+  $('#cards-btn').addEventListener('click', () => Study.open());
+  Panel.onCards = () => Study.open();
+
   // ---- Start up ---------------------------------------------------------------
   Graph.init($('#graph'));
   applyTheme(document.documentElement.dataset.theme, false);
