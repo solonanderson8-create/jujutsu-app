@@ -21,6 +21,89 @@
     return { x: 0, y: 0, w: innerWidth - panelEl.offsetWidth, h: innerHeight };
   };
 
+  // ---- Resizable bottom sheet (phones, portrait tablets) ------------------------
+  // The page snaps to three stops, like a drawer with detents:
+  //   peek = just the tabs (see almost the whole web), half, full.
+  const Sheet = {
+    snap: 'half',                                  // remembered while the app is open
+    stops() {
+      const top = panelEl.getBoundingClientRect().top;
+      const head = panelEl.querySelector('.panel-tabs, .journal-head');
+      const pad = parseFloat(getComputedStyle(panelEl).paddingBottom) || 0;
+      const peek = (head ? head.getBoundingClientRect().bottom - top : 80) + 14 + pad;
+      return { peek, half: innerHeight * 0.5, full: innerHeight - 70 };
+    },
+    set(px, animate = true) {
+      if (!animate) {                               // jump straight there (the slide-up still animates)
+        panelEl.classList.add('instant');
+        requestAnimationFrame(() => requestAnimationFrame(() => panelEl.classList.remove('instant')));
+      }
+      panelEl.style.setProperty('--sheet-h', Math.round(px) + 'px');
+    },
+    apply(name = this.snap, animate = true) {
+      if (!isSheet()) { panelEl.style.removeProperty('--sheet-h'); return; }
+      this.snap = name;
+      this.set(this.stops()[name], animate);
+      if (animate) setTimeout(keepFocusInView, 280);
+    },
+  };
+
+  // If the tapped move would end up hidden behind the page, slide the web so it shows.
+  function keepFocusInView() {
+    const f = Graph.selected;
+    if (!f || !panelEl.classList.contains('open')) return;
+    const n = JJ.byId[f.id];
+    if (!n || n.type !== 'technique') return;
+    const sp = Graph.spotFor(f.id, f.place), v = Graph.view;
+    const sy = sp.y * v.k + v.y, visibleBottom = innerHeight - panelEl.offsetHeight;
+    if (sy > visibleBottom - 40 || sy < 90) Graph.flyTo(sp.x, sp.y, v.k, 300);
+  }
+
+  (function bindSheetHandle() {
+    const handle = panelEl.querySelector('.sheet-handle');
+    let startY = 0, startH = 0, lastY = 0, lastT = 0, speed = 0, moved = 0, dragging = false;
+    handle.addEventListener('pointerdown', e => {
+      if (!isSheet()) return;
+      dragging = true; moved = 0; speed = 0;
+      startY = lastY = e.clientY; lastT = performance.now();
+      startH = panelEl.offsetHeight;
+      panelEl.classList.add('dragging');            // follow the finger with no lag
+      handle.setPointerCapture(e.pointerId);
+    });
+    handle.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const now = performance.now();
+      speed = (lastY - e.clientY) / Math.max(1, now - lastT);   // px per ms, + = upward
+      lastY = e.clientY; lastT = now;
+      moved = Math.max(moved, Math.abs(e.clientY - startY));
+      const { peek, full } = Sheet.stops();
+      Sheet.set(Math.min(full, Math.max(peek * 0.5, startH + (startY - e.clientY))));
+    });
+    const release = () => {
+      if (!dragging) return;
+      dragging = false;
+      panelEl.classList.remove('dragging');
+      if (moved < 6) return Sheet.apply(nextOnTap());              // a tap
+      const h = panelEl.offsetHeight, s = Sheet.stops();
+      if (h < s.peek - 30 && speed <= 0) return clear();          // dragged right down: close
+      const order = ['peek', 'half', 'full'];
+      let best = order.reduce((a, b) => Math.abs(s[b] - h) < Math.abs(s[a] - h) ? b : a);
+      if (Math.abs(speed) > 0.6) {                                // a quick flick moves one stop on
+        const i = order.indexOf(best);
+        const cur = order.reduce((a, b) => Math.abs(s[b] - startH) < Math.abs(s[a] - startH) ? b : a);
+        if (best === cur) best = order[Math.max(0, Math.min(2, i + (speed > 0 ? 1 : -1)))];
+      }
+      Sheet.apply(best);
+    };
+    handle.addEventListener('pointerup', release);
+    handle.addEventListener('pointercancel', release);
+    handle.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); Sheet.apply(nextOnTap()); }
+    });
+    // Tapping the handle: peek → half → full → half
+    function nextOnTap() { return Sheet.snap === 'half' ? 'full' : 'half'; }
+  })();
+
   // ---- Selecting things -----------------------------------------------------
   // `place` = which spot of a move (a move can sit in several positions).
   // Left out, the app picks the spot nearest to where you're looking.
@@ -36,6 +119,7 @@
     else place = undefined;
     Graph.select({ id, place });
     Panel.open(id, place);
+    Sheet.apply(undefined, false);
     journalBtn.classList.remove('active');
     if (fly) Graph.focusNode(id, place);
     const many = n.type === 'technique' && n.places.length > 1;
@@ -59,6 +143,7 @@
   function openJournal(entryId) {
     Graph.select(null);
     Panel.openJournal(entryId);
+    Sheet.apply(undefined, false);
     journalBtn.classList.add('active');           // "you are here" colour while it's open
     history.replaceState(null, '', '#journal');
   }
@@ -173,7 +258,7 @@
   setFilter('style', store.get('jj-filter-style') || 'all');
   setFilter('role', store.get('jj-filter-role') || 'all');
 
-  addEventListener('resize', () => Graph.apply());
+  addEventListener('resize', () => { Graph.apply(); if (panelEl.classList.contains('open')) Sheet.apply(undefined, false); });
 
   const [startId, startPlace] = decodeURIComponent(location.hash.slice(1)).split('@');
   if (startId === 'journal') openJournal();

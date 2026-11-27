@@ -176,16 +176,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (min-width: 720px) {
   .topbar { transition: right .28s ease; }
   .panel.open ~ .topbar { right: calc(var(--panel-w) + 12px); }
-  .panel.open ~ .topbar .brand { display: none; }
-}
-.brand {
-  display: flex; align-items: center; gap: 8px;
-  font-weight: 700; font-size: 17px;
-  padding: 8px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-}
-.brand-mark {
-  width: 14px; height: 14px; border-radius: 50%;
-  background: conic-gradient(#5fa8d3, #f28482, #e0a458, #b392ac, #5fa8d3);
 }
 .search { position: relative; flex: 1 1 200px; max-width: 360px; }
 #search {
@@ -282,6 +272,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .panel.open { transform: none; box-shadow: -12px 0 40px var(--shadow); }
 .panel.open ~ .legend { opacity: 0; pointer-events: none; }
 .panel { padding-top: env(safe-area-inset-top, 0px); }
+.sheet-handle { display: none; }   /* only shown when the page is a bottom sheet (below) */
 .panel-close {
   position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px; width: 36px; height: 36px;
   background: var(--surface-2); border: 0; border-radius: 50%; font-size: 22px; line-height: 1;
@@ -447,7 +438,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---------- Phones: compact top bar ---------- */
 @media (max-width: 719px) {
-  .brand { display: none; }
   .icon-btn.with-label { width: 42px; padding: 0; }
   .icon-btn.with-label .btn-label { display: none; }
   .search { max-width: none; }
@@ -462,22 +452,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
    Keep this query in sync with SHEET_QUERY in js/app.js. */
 @media (max-width: 719px), (orientation: portrait) and (max-width: 1100px) {
   .panel.open ~ .topbar { right: 12px; }
-  .panel.open ~ .topbar .brand { display: flex; }
   .panel {
-    top: auto; left: 0; width: 100%; height: 62vh;
+    top: auto; left: 0; width: 100%; height: var(--sheet-h, 50vh);
     border-left: 0; border-top: 1px solid var(--border); border-radius: 18px 18px 0 0;
     transform: translateY(100%);
+    transition: transform .28s ease, height .25s ease;
   }
+  .panel.dragging { transition: none; }
+  .panel.instant { transition: transform .28s ease; }
+  /* The grab handle: a strip across the top of the sheet with a small pill. */
+  .sheet-handle {
+    display: flex; justify-content: center; align-items: center; flex: none;
+    height: 24px; margin-bottom: -6px; cursor: ns-resize; touch-action: none;
+  }
+  .sheet-handle span { width: 44px; height: 5px; border-radius: 3px; background: var(--muted); opacity: .7; }
+  .sheet-handle:focus-visible span { background: var(--accent); opacity: 1; }
   .panel.open { box-shadow: 0 -12px 40px var(--shadow); }
   .panel { padding-top: 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
-  .panel-close { top: 12px; }
+  .panel-close { top: 18px; }
   .panel.open ~ .controls { display: none; }
   .hint { top: auto; bottom: 170px; }
-}
-/* Portrait iPad: the bottom sheet takes half the screen (phones keep a taller sheet). */
-@media (orientation: portrait) and (min-width: 720px) and (max-width: 1100px) {
-  .panel { height: 50vh; }
-}
-@media (max-width: 719px) {
-  .panel.open ~ .topbar .brand { display: none; }
 }

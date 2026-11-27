@@ -33,13 +33,14 @@
 
   <!-- The detail panel (filled in by js/panel.js) -->
   <aside id="panel" class="panel" aria-label="Details">
+    <!-- Grab handle: drag to resize the page on phones (snaps to peek / half / full) -->
+    <div class="sheet-handle" role="button" tabindex="0" aria-label="Resize page: drag, or tap to switch between half and full"><span></span></div>
     <button class="panel-close" aria-label="Close">×</button>
     <div class="panel-body"></div>
   </aside>
 
-  <!-- Top bar: title, search, Gi / No-Gi filter -->
+  <!-- Top bar: search, journal, theme, filters -->
   <header class="topbar">
-    <div class="brand"><span class="brand-mark"></span>Jujutsu Flow</div>
     <div class="search">
       <input id="search" type="search" placeholder="Search moves…  ( / )" autocomplete="off" aria-label="Search moves">
       <ul id="search-results" hidden></ul>
